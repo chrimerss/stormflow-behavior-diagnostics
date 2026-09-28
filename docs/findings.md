@@ -9,6 +9,38 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F10. About 1,800 "ungauged" catchments are slivers: their polygons cover under half of the real catchment {#f10}
+*2026-09-27 · Phase 1 / Phase 2 · the catchment-area problem*
+
+We compared the authors' polygon `Area` for the 14,476 GSIM "ungauged" catchments with the drainage area the national agency reports: the USGS site service, HYDAT, Hub'Eau, or GSIM's reported area for other countries, with US values converted from mi². 11,172 stations have a reference area.
+
+| Polygon / reported area | Catchments | of which US |
+|---|---:|---:|
+| < 1 % | 1,426 | 1,234 |
+| 1–50 % | 371 | 297 |
+| 50–80 % | 278 | 75 |
+| 0.8–1.25× | 8,820 | 1,881 |
+| > 1.25× | 277 | 120 |
+
+Examples, confirmed against the USGS site service and the polygon geometry itself:
+
+| USGS site | Station | USGS drainage area | Authors' polygon |
+|---|---|---:|---:|
+| 10312000 | Carson River near Fort Churchill, NV | 3,372 km² | 3.0 km² |
+| 14025000 | Birch Creek at Rieth, OR | 754 km² | 0.46 km² |
+| 01673800 | Po River near Spotsylvania, VA | 201 km² | 0.12 km² |
+| 02087359 | Walnut Creek near Raleigh, NC | 77 km² | 0.12 km² |
+
+- **Where they come from.** The polygons match GSIM's own estimated area (`area.est`), and 1,785 of the 1,797 cases have GSIM quality "Caution", meaning GSIM had no reported area to check its delineation against. These look like failed GSIM delineations snapped to a few grid cells near the gauge, carried unchecked into the ungauged set.
+- **How many are affected.** 42 % of US GSIM stations (1,531 of 3,607) are affected, and scattered cases occur elsewhere.
+- **What it means.** For these catchments, all 27 predictors and the predicted class describe a patch of hillslope next to the gauge, not the gauged river. They count toward the paper's catchment tallies: dormant predictions are 885 complex, 841 intermediate and 71 simple. By area they contribute almost nothing.
+- **The training set is not affected.** The authors' gauged polygons agree with reported areas ([F4](#f4)).
+- **For Phase 2.** Validation uses only stations whose polygon is within 0.8–1.25× the reported area. The rest are reported separately. 3,304 GSIM stations, mostly Australian, still need a reference area from the national agency.
+
+Output: `results/phase2/gsim_polygon_area_check.csv`, and `AREA MISMATCH` notes in `results/phase2/streamflow_manifest.csv`.
+
+---
+
 ## F9. Phase 0 passes: labels rebuild from raw data, but a quarter of the season splits cannot {#f9}
 *2026-09-27 · Phase 0, Check B · decision: **go***
 

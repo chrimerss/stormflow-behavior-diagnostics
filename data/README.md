@@ -1,12 +1,14 @@
 # Data
 
-Nothing under this folder except this README is tracked by git. Code reads data through `src/stormflow_diag/paths.py`; set `STORMFLOW_DATA` to point elsewhere.
+Nothing under this folder except this README and `phase2/README.md` is tracked by git. Code reads data through `src/stormflow_diag/paths.py`; set `STORMFLOW_DATA` to point elsewhere.
 
 | Folder | Source | Archive | Size (bytes) | SHA-256 | Downloaded |
 |---|---|---|---:|---|---|
 | `figshare/` | Figshare package for the paper (ref. 79), https://figshare.com/s/24fca5b7d89829035ff1 | `data.zip` | 4,149,492,029 | `396d022b7e835470336e588d3ff9d1b0c696599e981446e5c9ed9bb89402893e` | 2026-09-27 |
 | `zenodo_14253670/` | Sharif & Ameli (2024), *Searching for Functional Simplicity of Stormflow Generation*, https://zenodo.org/records/14253670 | `timeseries.zip` | 167,867,436 | `1449a6eabb32c576580563e1b2021b0d3f1b9dc217d43b3c022972aefc75878d` | 2026-09-27 |
 | | | `regression_and_spectral_analysis.zip` | 6,882,275 | `bca448504949c8d43110779a9f45c7a9821d44b83fb091c02ec0e553eeb4dc7a` | 2026-09-27 |
+| `hydat/` | Environment and Climate Change Canada HYDAT, https://collaboration.cmc.ec.gc.ca/cmc/hydrometrics/www/ | `Hydat_sqlite3_20260717.zip` | 278,852,677 | `b05eb121a547ca4a179a27aa47c354089fd902e93e5dc1e4a5416fc4641eb298` | 2026-09-27 |
+| `phase2/` | daily streamflow from national agencies (USGS, HYDAT, Hub'Eau), see [phase2/README.md](phase2/README.md) | | | | 2026-09-27 |
 
 Locally, `figshare/` is a symlink to the unpacked `data.zip` one level above the repo. To set up from scratch, unpack `data.zip` so that `data/figshare/README.txt` exists, and download the Zenodo record into `data/zenodo_14253670/`.
 

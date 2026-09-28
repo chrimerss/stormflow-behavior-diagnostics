@@ -1,6 +1,9 @@
 # data (Figshare package, too large for git)
 data/*
 !data/README.md
+!data/phase2/
+data/phase2/*
+!data/phase2/README.md
 
 # generated outputs; commit selected summaries explicitly with `git add -f`
 results/*
