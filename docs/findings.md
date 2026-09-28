@@ -9,6 +9,60 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F6. On the 246 boundary-flagged gauges the models barely beat "always complex" {#f6}
+*2026-09-27 · Phase 1*
+
+The authors labelled 246 gauges but left them out of training and out of the paper because their boundaries were flagged; 143 are in Denmark. None is in either training set, so they are a free out-of-sample test. Our Python port of the feature construction reproduces the authors' own predicted class for all 4,306 unflagged gauges in both seasons (100 %), so the predictions below come from exactly their models.
+
+| Set | Season | n | Accuracy | "Always complex" | Balanced acc. | κ |
+|---|---|---:|---:|---:|---:|---:|
+| Authors' test split | dormant | 859 | 0.768 | 0.618 | 0.719 | 0.54 |
+| Flagged gauges | dormant | 246 | 0.606 | 0.504 | 0.562 | 0.28 |
+| &nbsp;&nbsp;Denmark | dormant | 143 | 0.650 | 0.650 | 0.347 | 0.06 |
+| &nbsp;&nbsp;elsewhere | dormant | 103 | 0.544 | 0.301 | 0.588 | 0.32 |
+| Authors' test split | growing | 840 | 0.783 | 0.749 | 0.688 | 0.47 |
+| Flagged gauges | growing | 243 | 0.724 | 0.671 | 0.559 | 0.35 |
+| &nbsp;&nbsp;Denmark | growing | 143 | 0.790 | 0.818 | 0.332 | −0.01 |
+| &nbsp;&nbsp;elsewhere | growing | 100 | 0.630 | 0.460 | 0.573 | 0.33 |
+
+- In Denmark the models carry no information beyond the base rate (κ ≈ 0). 67 of 95 dormant intermediates overall are predicted complex.
+- Outside Denmark, skill falls to about κ 0.33 from the test-split 0.47–0.54.
+- Dormant simple: 15 of 23 predicted-simple flagged gauges are observed simple (precision 0.65), and 15 of 27 observed simple are found (recall 0.56).
+
+**Caveat.** These boundaries were flagged for a reason, so their attributes may be computed over the wrong area. A drop here mixes model error with input error. Phase 2 (independent gauges with good polygons) is the clean test.
+
+Code: `scripts/phase1_flagged.py`, `src/stormflow_diag/{predict,validate}.py`. Output: `results/phase1/`.
+
+---
+
+## F5. The reported "precision" is recall, and "specificity" is negative predictive value {#f5}
+*2026-09-27 · Phase 1 · audit of the released evaluation code*
+
+In `upstream/code/Reproducing_XGBoost_Models_Results.Rmd`, `eval_metrics_exe()` builds the confusion table with `caret::confusionMatrix(predicted, observed)`, which puts **predictions in rows and observations in columns**. `calculate_class_metrics()` then reads the rows as observed classes: it takes the column sum as TP + FP and the row sum as TP + FN. The two are swapped, so the function returns
+
+- recall under the name *precision*, and
+- negative predictive value, TN / (TN + FN), under the name *specificity*.
+
+We confirmed this by running the authors' functions, extracted verbatim from the Rmd, on their released models and split (`scripts/phase1_metric_audit.R`, R 4.3, xgboost 1.7.6, caret 6.0-94). The output reproduces every number in their rendered HTML report. Recomputing with the definitions stated in the paper's Methods gives:
+
+| Held-out test gauges | Reported "precision" | True precision | Reported "specificity" | True specificity |
+|---|---:|---:|---:|---:|
+| Dormant simple (n obs = 36) | 0.67 | **0.49** (24 / 49) | 0.99 | 0.97 |
+| Dormant intermediate | 0.65 | 0.68 | 0.82 | 0.84 |
+| Dormant complex | 0.84 | 0.84 | 0.74 | 0.75 |
+| Growing simple (n obs = 13) | 0.62 | **0.24** (8 / 34) | 0.99 | 0.97 |
+| Growing intermediate | 0.61 | **0.57** | 0.88 | 0.86 |
+| Growing complex | 0.84 | 0.89 | 0.60 | 0.69 |
+| Growing non-complex (binary) | 0.69 | **0.60** | 0.89 | 0.84 |
+
+**How this reaches the paper.** The held-out figures in the Methods section on model evaluation match the swapped values exactly: complex 0.84 in both seasons, dormant non-complex 0.75, growing non-complex 0.69, and every three-class metric at or above 0.60 (Supplementary Table 2). Under the paper's own definition of precision, the ≥ 0.60 statement fails for dormant simple (0.49), growing simple (0.24) and growing intermediate (0.57). By the paper's own benchmarks, growing-season simple predictions fall well below "acceptable": about three in four gauges the model calls simple are not.
+
+**What is unaffected.** The trained models, the predictions and the confusion matrices are unchanged; only the summary metrics are mislabelled. Complex-class precision is 0.84 and 0.89, so claims about complex catchments stand or improve.
+
+**Not yet checked.** The regional medians over 200 cross-validation trials (Supplementary Table 5) come from code that was not released. If that code uses the same function, those precisions are also recalls. The released notebook's regional table also scores each region on all its gauges, training gauges included. Both need Phase 3's re-run of the 200-trial protocol.
+
+---
+
 ## F4. Catchment areas agree with the GSIM polygons; polygon quality is the open question {#f4}
 *2026-09-27 · Phase 1 (preliminary)*
 
