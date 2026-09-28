@@ -74,7 +74,7 @@ Conventions we had to infer from their catalogue, each confirmed event by event:
 
 So a quarter of the gauged labels cannot be rebuilt from the released data. They also depend strongly on how the season is defined. A reasonable alternative split changes about one label in four.
 
-Code: `scripts/phase0_check_b_pilot.py`, `scripts/phase0_check_b_labels.py`. Output: `results/phase0/check_b_*.csv`. The DMCA-ESR port (`stage1/events.py`) will be published once licensing of the reference MATLAB code is settled; that repository carries no license.
+Code: `scripts/phase0_check_b_pilot.py`, `scripts/phase0_check_b_labels.py`. Output: `results/phase0/check_b_*.csv`. DMCA-ESR port: `src/stormflow_diag/stage1/events.py` (translation of https://github.com/giuliagiani/DMCA-ESR, with attribution), tests in `tests/test_events.py`.
 
 ---
 

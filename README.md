@@ -47,6 +47,10 @@ Then place the Figshare package under `data/` as described in [data/README.md](d
 
 See the [status page](https://chrimerss.github.io/stormflow-behavior-diagnostics/).
 
+## Third-party code and data
+
+`src/stormflow_diag/stage1/events.py` is a Python translation of the DMCA-ESR event-separation code by Giulia Giani (https://github.com/giuliagiani/DMCA-ESR), described in Giani, Rico-Ramirez & Woods (2022), *Water Resources Research*. That repository states no licence; please cite the paper when using the port. `tests/fixtures/dmca_example_27071.csv.gz` is the example series shipped with that repository, and `tests/fixtures/octave/` runs the original MATLAB code in GNU Octave to check the port.
+
 ## License
 
 MIT for code in this repository. `upstream/` keeps its own MIT license (© 2025 Hamed Sharif). The Figshare data follow the terms stated there.
