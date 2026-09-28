@@ -1,0 +1,26 @@
+# data (Figshare package, too large for git)
+data/*
+!data/README.md
+
+# generated outputs; commit selected summaries explicitly with `git add -f`
+results/*
+!results/.gitkeep
+
+# paper PDF and partial downloads
+*.pdf
+*.crdownload
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# OS / tooling
+.DS_Store
+.omc/

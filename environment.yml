@@ -1,0 +1,34 @@
+name: stormflow-diag
+channels:
+  - conda-forge
+dependencies:
+  # Python side: diagnostics
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - xgboost=1.7          # same major/minor as the authors' R xgboost 1.7.9.1, so the saved models load unchanged
+  - shap
+  - geopandas
+  - matplotlib
+  - seaborn
+  - pyreadr              # read upstream/data/Training_IDs.RData
+  - jupyterlab
+  # R side: exact reproduction of upstream/code/Reproducing_XGBoost_Models_Results.Rmd
+  - r-base=4.4
+  - r-rmarkdown
+  - r-data.table
+  - r-here
+  - r-tidyverse
+  - r-xgboost=1.7
+  - r-caret
+  - r-knitr
+  - r-countrycode
+  - r-maptiles
+  - r-tidyterra
+  - r-sf
+  - r-scales
+  - r-ggthemes
+  - r-rnaturalearth
+  - r-testthat
