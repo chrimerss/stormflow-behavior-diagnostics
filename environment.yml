@@ -15,6 +15,15 @@ dependencies:
   - pyreadr              # upstream/data/Training_IDs.RData
   - pyarrow
   - pytest
+  - geopandas
+  - pyogrio
+  - exactextract         # basin-mean rainfall weights
+  - rasterio
+  - xarray
+  - netcdf4
+  - dataretrieval        # USGS NWIS
+  - requests
+  - tqdm
   - rpy2
   - r-base=4.3
   - r-segmented          # Muggeo's breakpoint regression and score test

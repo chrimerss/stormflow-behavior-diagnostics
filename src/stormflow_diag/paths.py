@@ -11,6 +11,9 @@ RESULTS = REPO / "results"
 
 GAUGED_ATTRS = FIGSHARE / "Gauged_Catchments_Metadata_and_Attributes.csv"
 GAUGED_PHENOLOGY = FIGSHARE / "Gauged_Catchments_Growing_Dormancy_Probability.csv"
+UNGAUGED_PHENOLOGY = FIGSHARE / "Ungauged_Catchments_Growing_Dormancy_Probability.csv"
+GAUGED_BOUNDARIES = FIGSHARE / "Gauged_Catchments_Boundaries.gpkg"
+UNGAUGED_BOUNDARIES = FIGSHARE / "63434619_Ungauged_Catchments_Boundaries.gpkg"
 EVENT_INPUTS_ZIP = FIGSHARE / "Event_Inputs.zip"
 EVENTS = {
     "dormant": FIGSHARE / "Identified_Rainfall_Runoff_Events_Dormant.csv",

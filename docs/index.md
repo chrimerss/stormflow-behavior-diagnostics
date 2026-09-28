@@ -20,7 +20,7 @@ hold up when the analysis is rebuilt and extended. The paper labels 4,306 gauged
 | 0A | Does the authors' regression rule reproduce their labels from their own event catalogue? | **Pass**: 99.94 % ([F2](findings.html#f2)) |
 | 0B | Does DMCA-ESR on the raw series reproduce their event catalogue? | **Pass**: 99.999 % of events, 99.94 % of labels; **go** ([F9](findings.html#f9)) |
 | 1 | Do the 246 boundary-flagged gauges agree with the model? Are catchment areas right? | Done: flagged gauges ([F6](findings.html#f6)), Area ([F4](findings.html#f4)); metric audit ([F5](findings.html#f5)) |
-| 2 | Assemble independent validation gauges | **US first**: 1,485 USGS stations with a correct polygon and ≥ 10 usable years (45 dormant / 12 growing predicted simple). Streamflow in hand; EM-Earth rainfall transfer under way. GRDC-only countries dropped (no batch download) |
+| 2 | Assemble independent validation gauges | **US first**: 1,485 USGS stations with a correct polygon and ≥ 10 usable years (45 dormant / 12 growing predicted simple). Our USGS processing reproduces the authors' streamflow at 680 of 681 gauged sites. 549 validation catchments are independent of the training polygons, 81 nested, 413 contain one. Waiting on EM-Earth rainfall |
 | 3 | Score the model on them against simple baselines | Not started |
 | 4 | Is the label stable across record halves and rainfall products? | Record halves done on the authors' catalogue ([F8](findings.html#f8)); rainfall swaps need Phase 2 data |
 | 5 | Brand-new gauges in simple-rich regions (optional) | Not started |

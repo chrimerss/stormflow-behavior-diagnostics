@@ -575,7 +575,7 @@ def season_probability(start, end, monthly):
 
 
 def detect_gauge_events(gcin, r_min=R_MIN, l_max=L_MAX, min_events=MIN_EVENTS_PER_SEASON,
-                        inputs=None, phenology=None, attributes=None):
+                        inputs=None, phenology=None, attributes=None, gauged=True):
     """Detect and filter events for one gauge as in Ameli et al. (2026).
 
     Conventions, each inferred from the authors' catalogue (``Identified_
@@ -613,6 +613,10 @@ def detect_gauge_events(gcin, r_min=R_MIN, l_max=L_MAX, min_events=MIN_EVENTS_PE
         read from ``Gauged_Catchments_Growing_Dormancy_Probability.csv`` when None.
     attributes : optional DataFrame of gauge metadata indexed by GCIN, used
         for ``Catchment_Boundary_Flagged``; read from the metadata CSV when None.
+    gauged : False for a catchment that is not one of the authors' gauges
+        (e.g. a UCIN). ``inputs`` and ``phenology`` must then be given, nothing
+        is read from the gauged tables (UCINs overlap GCIN numbers), and
+        ``Catchment_Boundary_Flagged`` is NA. The ``GCIN`` column holds the id.
 
     Returns
     -------
@@ -620,6 +624,8 @@ def detect_gauge_events(gcin, r_min=R_MIN, l_max=L_MAX, min_events=MIN_EVENTS_PE
     is our 0-based DMCA event number within the gauge (their ids are global
     counters that cannot be reproduced).
     """
+    if not gauged and (inputs is None or phenology is None):
+        raise ValueError("gauged=False needs inputs and phenology")
     if inputs is None:
         inputs = load_event_inputs(gcin)
     dates = pd.DatetimeIndex(inputs["date"])
@@ -659,11 +665,14 @@ def detect_gauge_events(gcin, r_min=R_MIN, l_max=L_MAX, min_events=MIN_EVENTS_PE
         out["start_precip_date"], out["end_stormflow_date"], phenology)
     out["season"] = np.where(out["growing_dormancy_prob"] < 0, "dormant", "growing")
 
-    if attributes is None:
-        attributes = pd.read_csv(paths.GAUGED_ATTRS, index_col="GCIN",
-                                 usecols=["GCIN", "Catchment_Boundary_Flagged"])
-    flagged = attributes.loc[int(gcin), "Catchment_Boundary_Flagged"]
-    out["Catchment_Boundary_Flagged"] = bool(flagged)
+    if not gauged:
+        out["Catchment_Boundary_Flagged"] = pd.NA
+    else:
+        if attributes is None:
+            attributes = pd.read_csv(paths.GAUGED_ATTRS, index_col="GCIN",
+                                     usecols=["GCIN", "Catchment_Boundary_Flagged"])
+        flagged = attributes.loc[int(gcin), "Catchment_Boundary_Flagged"]
+        out["Catchment_Boundary_Flagged"] = bool(flagged)
 
     if min_events:
         counts = out["season"].map(out["season"].value_counts())

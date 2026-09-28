@@ -165,6 +165,20 @@ def test_known_tie_mismatch_gcin_2660(catalogue):
 
 
 @needs_inputs
+def test_ungauged_path_reads_no_gauged_tables(monkeypatch):
+    inputs = ev.load_event_inputs(2)
+    pheno = pd.read_csv(paths.GAUGED_PHENOLOGY, index_col="GCIN").loc[2, ev.MONTHS].to_numpy(float)
+    gauged = ev.detect_gauge_events(2, min_events=0, inputs=inputs, phenology=pheno)
+    monkeypatch.setattr(ev.pd, "read_csv", lambda *a, **k: pytest.fail("gauged table read"))
+    ours = ev.detect_gauge_events(2, min_events=0, inputs=inputs, phenology=pheno, gauged=False)
+    assert ours["Catchment_Boundary_Flagged"].isna().all()
+    cols = [c for c in ours.columns if c != "Catchment_Boundary_Flagged"]
+    pd.testing.assert_frame_equal(ours[cols], gauged[cols])
+    with pytest.raises(ValueError):
+        ev.detect_gauge_events(2, inputs=inputs, gauged=False)
+
+
+@needs_inputs
 def test_min_events_rule_drops_small_seasons():
     ours = ev.detect_gauge_events(2, min_events=0)
     counts = ours.season.value_counts()

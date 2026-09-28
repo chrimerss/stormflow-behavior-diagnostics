@@ -35,3 +35,11 @@ All accessed 2026-09-27.
 ## Matching GSIM stations without a national ID (GB, FR)
 
 GSIM gives only GRDC or EWA numbers for Great Britain and France, and neither provider API carries those numbers. A GSIM station is mapped to a national station when the national station lies within 5 km of the GSIM coordinates and its catchment area is within 1 % (NRFA) or 2 % (Hub'Eau site `surface_bv`) of the area GSIM reports (the agencies supplied that area to GRDC/EWA; NRFA areas usually agree to 0.1 km²). If several qualify, the nearest is used only when the next is at least 3 times farther; otherwise the station is unmapped. Names are never used to make a match. A match is rejected when no word of the GSIM river name resembles (similarity ≥ 0.8) a word of the national station name, which catches wrong GSIM coordinates. The mapping tables are `results/phase2/streamflow_mapping_{nrfa,hubeau}.csv`.
+
+## Authors' gauged US stations (cross-check)
+
+`streamflow/usgs_gauged/<GCIN>.parquet`: the same USGS NWIS series for the 681 gauged catchments with Source ID `GSIM_US_*`, same columns, with `q_mmd` from the authors' `Area` for that GCIN. Written by `scripts/phase2_us_gauged_streamflow.py`, which compares them with `streamflow_mmd` in `Event_Inputs/<GCIN>.csv` (`results/phase2/us_streamflow_vs_authors.csv`).
+
+## EM-Earth basin-mean precipitation
+
+`forcing/emearth/<set>/prcp_YYYYMM.parquet`, one file per EM-Earth month (`EM_Earth_deterministic_daily_prcp_YYYYMM.nc`), long format: `id` (UCIN or GCIN), `date`, `prcp_mmd` (area-weighted mean over the polygon, mm/day), `prcp_mmd_coverage` (coverage-fraction weights only; `us_gauged` only) and `valid_frac` (share of the polygon's weight with data that day). Sets: `us_validation` (UCIN polygons of the US validation set) and `us_gauged` (the authors' `GSIM_US_*` gauged polygons, for the check against their `precipitation_mmd`). `weights_<hash>.npz` caches the exactextract coverage fractions, `grid.txt` the grid they belong to, `extract_status.json` the last status of each month. Written by `scripts/phase2_emearth.py` (see `src/stormflow_diag/forcing.py` for the method).

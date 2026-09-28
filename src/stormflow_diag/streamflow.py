@@ -32,6 +32,7 @@ MI2 = 2.589988110336  # km2 per mi2
 OUT = paths.DATA / "phase2" / "streamflow"
 INVENTORY = paths.RESULTS / "phase2" / "station_inventory.csv"
 MANIFEST = paths.RESULTS / "phase2" / "streamflow_manifest.csv"
+AREA_CHECK = paths.RESULTS / "phase2" / "gsim_polygon_area_check.csv"
 MANIFEST_COLS = ["UCIN", "source", "national_id", "status", "first_date", "last_date", "n_days_valid",
                  "frac_missing_1979_2019", "n_years_ge_300_valid_days", "note",
                  "area_km2", "national_area_km2", "mean_q_mmd"]
@@ -39,6 +40,18 @@ MANIFEST_COLS = ["UCIN", "source", "national_id", "status", "first_date", "last_
 
 def inventory() -> pd.DataFrame:
     return pd.read_csv(INVENTORY, dtype={"reference.no": str, "Source ID": str})
+
+
+def validation_set(source: str = "usgs", min_years: int = 10) -> pd.DataFrame:
+    """Validation stations of one source: manifest status ok, >= `min_years` calendar years
+    with >= 300 valid days in 1979-2019, and polygon area within 0.8-1.25x the national
+    drainage area (`r` in results/phase2/gsim_polygon_area_check.csv)."""
+    man = pd.read_csv(MANIFEST, dtype={"national_id": str})
+    chk = pd.read_csv(AREA_CHECK, usecols=["UCIN", "Source ID", "dormant_predicted_class",
+                                           "growing_predicted_class", "r"])
+    v = man[(man.source == source) & (man.status == "ok") & (man.n_years_ge_300_valid_days >= min_years)]
+    v = v.merge(chk, on="UCIN")
+    return v[v.r.between(0.8, 1.25)].reset_index(drop=True)
 
 
 def retry(fn, *args, tries: int = 4, wait: float = 10.0, **kwargs):
