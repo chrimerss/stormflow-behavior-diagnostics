@@ -24,3 +24,4 @@ __pycache__/
 # OS / tooling
 .DS_Store
 .omc/
+*.egg-info/

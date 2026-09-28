@@ -9,6 +9,49 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F4. Catchment areas agree with the GSIM polygons; polygon quality is the open question {#f4}
+*2026-09-27 · Phase 1 (preliminary)*
+
+1,980 of the 4,552 gauged catchments are GSIM stations. For all of them we compared the authors' `Area` with the GSIM catalogue (Do et al. 2018, `GSIM_metadata.zip`).
+
+- Against the GSIM polygon area (`area.est`) the authors' `Area` agrees within 10 % for 99.6 % of gauges (median ratio 1.004). The same values appear in `upstream/data`, so the model saw these areas.
+- Against the GSIM *reported* area, 29 % differ by more than 2×, but 577 of those 588 are US gauges at a median ratio of 2.61. That's km² per mi², so the gap is a unit issue in GSIM's reported field, not an error by the authors.
+- The polygons themselves are a weaker point. GSIM rates 226 of the authors' unflagged polygons "Low" quality and 198 "Caution" (no reported area to check against). 19 unflagged polygons differ from the reported area by more than 50 %: 16 dormant complex, 3 intermediate.
+- Not covered: the 2,572 gauges from CAMELS and other sources.
+
+---
+
+## F3. Two features of the labelling rule that the class names hide {#f3}
+*2026-09-27 · Phase 0, Check A*
+
+- **Most "simple" gauges have significant thresholds.** 177 of 210 dormant-season simple gauges (65 of 73 growing) also have a statistically significant breakpoint (score test, p < 0.05). The rule checks the linear fit first, so any gauge with linear R² ≥ 0.75 is simple no matter how clear its threshold is. "Simple" means *well fitted by a line*, not *free of threshold behaviour*.
+- **Intermediates labelled through the segmented fit alone rest on a handful of events.** 44 dormant and 60 growing intermediates have linear R² < 0.5 and reach segmented R² ≥ 0.75. In every one, the segment above the upper breakpoint holds 5–15 % of the events: a median of 4.5 (dormant) and 6 (growing) events, and as few as 2. These are 2.8 % and 5.6 % of all intermediates, so the class totals barely depend on them. Their individual labels, though, depend on a few of the largest storms.
+
+---
+
+## F2. Phase 0 Check A passes: the regression step reproduces 99.94 % of labels {#f2}
+*2026-09-27 · Phase 0, Check A*
+
+We refitted every catchment-season in the authors' event catalogue (9,000 fits: 4,552 dormant, 4,448 growing with ≥ 15 events). The fits used R `segmented` 2.1.4 through rpy2: an OLS linear fit, then up to two breakpoints added one at a time, each kept only if its score test (Muggeo 2016) gives p < 0.05. Labels follow the Methods rule.
+
+| Season | Agreement | Simple reproduced | Mismatches |
+|---|---:|---:|---|
+| Dormant | 4,548 / 4,552 (99.91 %) | 210 / 210 | 2 intermediate→complex, 2 complex→intermediate |
+| Growing | 4,447 / 4,448 (99.98 %) | 73 / 73 | 1 intermediate→complex |
+
+This is well above the go threshold (≥ 95 %, all 210 dormant simple). Four of the five mismatches are small samples (15–44 events), three of them with a score-test p-value between 0.04 and 0.10. The fifth, a growing-season gauge with 122 events, has segmented R² 0.72 against the 0.75 cut. All five are consistent with small differences in breakpoint optimisation, since `segmented` uses random restarts. Per-gauge detail is in the results file.
+
+**Implementation cross-check.** Against the per-catchment R² in the authors' 2024 release (Zenodo 14253670), our fits match to within 0.0001 for all 528 linear models. For the 185 one-breakpoint models the median difference is 0.0000 (max 0.036).
+
+**Readings of the Methods that do not match as well.** Muggeo's `selgmented()` selector gives 99.67 % / 99.89 %. Taking the best segmented fit regardless of significance gives 99.52 % / 99.62 %. Dropping the significance test changes 22 dormant and 16 growing labels.
+
+**What this shows:** given their event catalogue, their labels are reproducible and the Methods describe the rule accurately.
+**What it does not show:** that the event catalogue reproduces from raw data. That is Check B, in progress.
+
+Code: `src/stormflow_diag/stage1/{regression.py,segfit.R}`, `scripts/phase0_check_a.py`. Per-gauge output: `results/phase0/check_a_fits.csv`.
+
+---
+
 ## F1. Linear R² from the authors' catalogue reproduces the linear-determined labels {#f1}
 *2026-09-27 · Phase 0, Check A (partial)*
 
