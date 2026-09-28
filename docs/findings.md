@@ -9,6 +9,37 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F8. Independent halves of a record give the same label only ~70 % of the time {#f8}
+*2026-09-27 · Phase 4 (using the authors' event catalogue)*
+
+The paper supports label robustness with a jackknife: 100 random 80 % subsamples per catchment-season, and certainty is the share that keep the full-sample label. We reran that exact procedure with our pipeline. For every simple gauge and 200 random intermediate and 200 complex gauges per season, it reproduces their reported medians:
+
+| Median certainty | Paper, dormant | Ours, dormant | Paper, growing | Ours, growing |
+|---|---:|---:|---:|---:|
+| Simple | 98 % | 97 % | 86 % | 88 % |
+| Intermediate | 96 % | 98 % | 92 % | 92 % |
+| Complex | 100 % | 100 % | 100 % | 100 % |
+
+Any two 80 % subsamples share at least 60 % of their events, and each shares 80 % with the full record, so this test mostly measures overlap. A stricter test splits each record into two **disjoint** halves, each labelled with the same rule and each needing at least 15 events. The median half holds 102 (dormant) or 120 (growing) events.
+
+| Disjoint halves agree | Dormant | Growing |
+|---|---:|---:|
+| Chronological (first vs second half of the record) | 69.3 % | 70.2 % |
+| Random halves | 69.9 % | 72.5 % |
+| Simple gauges (chronological / random) | 64.5 / 60.9 % | 48.6 / 50.0 % |
+| Intermediate gauges | 59.5 / 60.9 % | 51.8 / 57.5 % |
+| Complex gauges | 75.4 / 75.8 % | 76.5 / 77.8 % |
+
+- **No sign of drift over time.** Chronological halves agree almost as often as random halves (a gap of 0.6 and 2.3 points), so labels do not shift systematically between early and late periods.
+- **Large sampling instability.** About 30 % of catchments change class between two independent sets of ~100 storms. For simple gauges, the two halves agree only about half the time in the growing season.
+- **Caveat.** Each half has half the events, so it is noisier than the full record the paper labels. This result bounds full-record reproducibility from below. It applies directly to validation gauges with shorter records and to gauges near the 15-event minimum.
+
+**Implication.** The jackknife numbers show that labels are stable to resampling the same storms, not that another sample of storms from the same catchment would give the same class. How much of the XGBoost "error" in [F5](#f5)–[F6](#f6) is label noise rather than model error is an open question for Phase 3.
+
+Code: `scripts/phase4_split_half.py`, `scripts/phase4_jackknife.py`. Output: `results/phase4/`.
+
+---
+
 ## F7. Almost all "simple" ungauged predictions are tiny British Columbia–area basins below the training range of area {#f7}
 *2026-09-27 · Phase 2 scoping*
 
