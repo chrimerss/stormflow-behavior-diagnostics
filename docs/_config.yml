@@ -1,0 +1,10 @@
+title: Stormflow behaviour diagnostics
+description: Independent robustness check of Ameli, Sharif & McDonnell (2026, Nature Water)
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+color_scheme: light
+search_enabled: true
+aux_links:
+  "GitHub repository": "https://github.com/chrimerss/stormflow-behavior-diagnostics"
+footer_content: "Independent diagnostics. Not affiliated with the paper's authors."

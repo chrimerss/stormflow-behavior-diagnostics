@@ -14,21 +14,36 @@ dependencies:
   - matplotlib
   - seaborn
   - pyreadr              # read upstream/data/Training_IDs.RData
+  - statsmodels
+  - rpy2                 # call R segmented (Muggeo) from Python for the Phase 0 regression
+  - pyarrow
+  - xarray
+  - netcdf4
+  - rasterio
+  - exactextract         # basin-mean rainfall over catchment polygons (Phase 2)
+  - s3fs                 # EM-Earth on AWS
+  - dataretrieval        # USGS NWIS
+  - requests
+  - tqdm
+  - pytest
   - jupyterlab
   # R side: exact reproduction of upstream/code/Reproducing_XGBoost_Models_Results.Rmd
-  - r-base=4.4
+  # conda-forge has r-xgboost 1.7 only up to R 4.3 (authors used R 4.4.2; the model files are version-independent)
+  # tidyterra and rnaturalearthhires are not on conda-forge: run scripts/setup_r_extras.R after creating the env
+  - r-base=4.3
   - r-rmarkdown
   - r-data.table
   - r-here
   - r-tidyverse
-  - r-xgboost=1.7
+  - r-xgboost=1.7.6
   - r-caret
   - r-knitr
   - r-countrycode
   - r-maptiles
-  - r-tidyterra
+  - r-terra
   - r-sf
   - r-scales
   - r-ggthemes
   - r-rnaturalearth
   - r-testthat
+  - r-segmented          # breakpoint regression used by the authors (Muggeo)

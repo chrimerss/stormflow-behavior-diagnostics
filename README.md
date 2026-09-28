@@ -6,6 +6,8 @@ Independent robustness diagnostics for
 
 The paper sorts rain-dominated catchments into three seasonal functional types (simple, intermediate, complex) from event-scale rainfall–runoff behaviour in gauged catchments, then extrapolates the labels to 77,585 ungauged catchments with two season-specific XGBoost classifiers. This repository re-runs the authors' released code and data and tests whether the headline conclusions survive reasonable changes to the analysis.
 
+**Progress and findings:** https://chrimerss.github.io/stormflow-behavior-diagnostics/ (plan in [docs/PLAN.md](docs/PLAN.md))
+
 ## Provenance
 
 | Item | Source | Pinned |
@@ -18,10 +20,13 @@ The diagnostics never modify `upstream/`; any change to the authors' pipeline li
 ## Layout
 
 ```
-upstream/      authors' code, models and gauged/ungauged attribute tables (submodule, read-only)
-data/          Figshare package, not tracked by git
-experiments/   one folder per diagnostic
-results/       generated tables and figures
+upstream/             authors' code, models and gauged/ungauged attribute tables (submodule, read-only)
+data/                 Figshare and Zenodo packages, not tracked by git
+src/stormflow_diag/   Python package: stage1 (events + labels), predict, validate
+scripts/              entry points for each check
+experiments/          one folder per diagnostic
+results/              generated tables and figures
+docs/                 GitHub Pages site: status, findings log, plan
 ```
 
 ## Setup
@@ -31,16 +36,15 @@ git clone --recurse-submodules https://github.com/chrimerss/stormflow-behavior-d
 cd stormflow-behavior-diagnostics
 mamba env create -f environment.yml
 mamba activate stormflow-diag
+Rscript scripts/setup_r_extras.R
+pip install -e .
 ```
 
 Then place the Figshare package under `data/` as described in [data/README.md](data/README.md).
 
 ## Status
 
-- [x] Repository and upstream pin
-- [ ] Data in place
-- [ ] Baseline reproduction of the authors' reported results
-- [ ] Diagnostic experiments (plan pending)
+See the [status page](https://chrimerss.github.io/stormflow-behavior-diagnostics/).
 
 ## License
 
