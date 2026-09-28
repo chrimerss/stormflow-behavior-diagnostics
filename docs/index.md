@@ -20,7 +20,7 @@ hold up when the analysis is rebuilt and extended. The paper labels 4,306 gauged
 | 0A | Does the authors' regression rule reproduce their labels from their own event catalogue? | **Pass**: 99.94 % ([F2](findings.html#f2)) |
 | 0B | Does DMCA-ESR on the raw series reproduce their event catalogue? | **Pass**: 99.999 % of events, 99.94 % of labels; **go** ([F9](findings.html#f9)) |
 | 1 | Do the 246 boundary-flagged gauges agree with the model? Are catchment areas right? | Done: flagged gauges ([F6](findings.html#f6)), Area ([F4](findings.html#f4)); metric audit ([F5](findings.html#f5)) |
-| 2 | Assemble ~15,000 independent validation gauges | Not started |
+| 2 | Assemble ~15,000 independent validation gauges | Inventory built (17,236 station catchments, [F7](findings.html#f7)); streamflow download under way (USGS, HYDAT, NRFA, Hub'Eau); EM-Earth rainfall access pending |
 | 3 | Score the model on them against simple baselines | Not started |
 | 4 | Is the label stable across record halves and rainfall products? | Record halves done on the authors' catalogue ([F8](findings.html#f8)); rainfall swaps need Phase 2 data |
 | 5 | Brand-new gauges in simple-rich regions (optional) | Not started |
