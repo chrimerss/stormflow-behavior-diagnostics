@@ -9,6 +9,30 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F11. Most US training rainfall is not EM-Earth, although the metadata says it is {#f11}
+*2026-09-28 · Phase 2, rainfall provenance (3 months tested: Aug 1999, 2008, 2013)*
+
+We averaged EM-Earth daily precipitation over the authors' gauged polygons and compared the result with the rainfall in their inputs (`Event_Inputs/<GCIN>.csv`). We did this for all 681 US gauges whose metadata gives `precipitation_source = EM-Earth`.
+
+- **How they built the EM-Earth series.** They used the gauge-undercatch-corrected variable `prcp_corrected`, not `prcp`, averaged with plain cell-coverage weights (the exactextract mean). With that choice our series equals theirs to about 1e-7 mm/day on every day.
+- **Only 190 of the 681 gauges match.** They are exactly the 190 whose inputs run 1950–2019. None of the 491 gauges whose inputs run 1979–2018 match:
+
+| US gauges, compared with EM-Earth `prcp_corrected` | Correlation (median) | Mean abs. difference | Days equal |
+|---|---:|---:|---:|
+| Metadata EM-Earth, inputs 1950–2019 (190) | 1.000 | 0.000 mm | 100 % |
+| Metadata EM-Earth, inputs 1979–2018 (491) | 0.974 | 0.77 mm | 12 % |
+| Metadata EMDNA (269 `WRR_` gauges) | 0.966 | 0.87 mm | 9 % |
+
+- **The 491 look like EMDNA.** 1979–2018 is exactly the period of EMDNA, the North American dataset from the same group. The 269 gauges labelled EMDNA use the same window, and the 491 differ from EM-Earth in the same way they do. The same window appears for 31 Canadian gauges labelled EM-Earth. We have not yet compared these series with EMDNA itself, so this is an inference, not a proof.
+- **Consequences.**
+  - If the inference holds, about 760 of the 950 US training labels come from EMDNA rainfall, not the 269 the metadata implies.
+  - The metadata column `precipitation_source` is wrong for about a sixth of all gauged catchments.
+  - Validating US predictions on EM-Earth alone would mix a model test with a rainfall-product swap. We will label the US validation gauges with both products, and count flips between them as a Phase 4 result.
+
+Code: `scripts/phase2_emearth.py us-gauged --months …` then `check`. Output: `results/phase2/emearth_vs_authors.csv`.
+
+---
+
 ## F10. About 1,800 "ungauged" catchments are slivers: their polygons cover under half of the real catchment {#f10}
 *2026-09-27 · Phase 1 / Phase 2 · the catchment-area problem*
 

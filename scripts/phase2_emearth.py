@@ -13,7 +13,7 @@ us-gauged     : the authors' gauged polygons with Source ID GSIM_US_* (their
 check         : compares the us-gauged extraction with `precipitation_mmd` in
                 Event_Inputs/<GCIN>.csv, which is their EM-Earth basin mean over
                 the same polygons, on every day extracted so far. Writes
-                results/phase2/emearth_vs_authors.csv, one row per GCIN and weighting:
+                results/phase2/emearth_vs_authors.csv, one row per GCIN, variable (prcp, prcp_corrected) and weighting:
                 n_days, frac_close (|ours - theirs| <= 0.1 % + 0.001 mm), max/mean
                 absolute difference, ratio of totals, and correlation at lags
                 -1/0/+1 days (a best lag other than 0 means a date offset).
@@ -36,6 +36,8 @@ from stormflow_diag.stage1 import events as ev
 
 CACHE = paths.DATA / "phase2" / "forcing" / "emearth"
 CHECK_CSV = paths.RESULTS / "phase2" / "emearth_vs_authors.csv"
+# EM-Earth files carry both; which one the authors used is settled by `check`
+VARIABLES = ("prcp", "prcp_corrected")
 
 
 def us_gauged_ids() -> list[int]:
@@ -44,16 +46,16 @@ def us_gauged_ids() -> list[int]:
     return sorted(m.GCIN)
 
 
-def run_extract(which: str, emearth_dir, include_cloud: bool) -> None:
+def run_extract(which: str, emearth_dir, include_cloud: bool, months=None) -> None:
     if which == "us-validation":
         polys = forcing.boundaries("ungauged", sf.validation_set("usgs").UCIN)
-        weightings = ("area",)
+        weightings, variables = ("coverage",), ("prcp_corrected",)  # the authors' choice (F11)
     else:
         polys = forcing.boundaries("gauged", us_gauged_ids())
-        weightings = ("area", "coverage")
+        weightings, variables = ("area", "coverage"), VARIABLES
     cache = CACHE / which.replace("-", "_")
     status = forcing.extract(forcing.emearth_dir(emearth_dir), polys.geometry, cache, weightings=weightings,
-                             include_cloud=include_cloud)
+                             include_cloud=include_cloud, months=months, variables=variables)
     forcing.write_manifest(cache, status)
     counts = pd.Series(status).str.split(":").str[0].value_counts()
     print(f"{which}: {len(polys)} polygons; months {counts.to_dict()}; cached {len(forcing.cached_months(cache))}")
@@ -76,7 +78,8 @@ def run_check() -> None:
         raise SystemExit(f"nothing extracted in {cache}; run `us-gauged` first")
     print(f"{len(months)} months extracted: {months[0]} .. {months[-1]}")
     ids = us_gauged_ids()
-    ours = {w: forcing.load(cache, ids, column=c) for w, c in forcing.WEIGHTINGS.items()}
+    ours = {f"{v}/{w}": forcing.load(cache, ids, column=forcing.column(v, w))
+            for v in VARIABLES for w in forcing.WEIGHTINGS}
     valid = forcing.load(cache, ids, column="valid_frac")
     rows = []
     for g in ids:
@@ -116,11 +119,12 @@ def main() -> None:
     ap.add_argument("--emearth-dir", help="directory of EM_Earth_deterministic_daily_prcp_YYYYMM.nc (or EMEARTH_DIR)")
     ap.add_argument("--include-cloud", action="store_true",
                     help="also open cloud-only placeholder files (starts their download)")
+    ap.add_argument("--months", nargs="+", help="restrict to these YYYYMM")
     a = ap.parse_args()
     if a.what == "check":
         run_check()
     else:
-        run_extract(a.what, a.emearth_dir, a.include_cloud)
+        run_extract(a.what, a.emearth_dir, a.include_cloud, a.months)
 
 
 if __name__ == "__main__":

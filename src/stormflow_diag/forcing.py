@@ -51,6 +51,11 @@ from stormflow_diag import paths
 
 FILE_RE = re.compile(r"EM_Earth_deterministic_daily_prcp_(\d{6})\.nc$")
 WEIGHTINGS = {"area": "prcp_mmd", "coverage": "prcp_mmd_coverage"}
+
+
+def column(var: str = "prcp", weighting: str = "area") -> str:
+    """Output column for a variable and weighting: prcp_mmd, prcp_corrected_mmd_coverage, ..."""
+    return f"{var}_mmd" + ("_coverage" if weighting == "coverage" else "")
 SF_DATALESS = 0x40000000  # macOS st_flags bit of a cloud-only placeholder
 MIN_COVERAGE = 1e-9  # relative to the polygon's largest coverage; drops exactextract round-off slivers
 
@@ -84,12 +89,13 @@ def boundaries(kind: str, ids=None):
 # ---------------------------------------------------------------------------
 # grid
 # ---------------------------------------------------------------------------
-def _names(ds) -> tuple[str, str, str, str]:
+def _names(ds, var: str | None = None) -> tuple[str, str, str, str]:
     """(variable, time dimension, lat, lon) names in an EM-Earth-like dataset."""
     pool = set(ds.variables) | set(ds.dims)
     lat = next(n for n in ("lat", "latitude", "y") if n in pool)
     lon = next(n for n in ("lon", "longitude", "x") if n in pool)
-    var = "prcp" if "prcp" in ds.data_vars else next(v for v in ds.data_vars if ds[v].ndim == 3)
+    if var is None:
+        var = "prcp" if "prcp" in ds.data_vars else next(v for v in ds.data_vars if ds[v].ndim == 3)
     tdim = next(d for d in ds[var].dims if d not in (lat, lon))
     return var, tdim, lat, lon
 
@@ -101,16 +107,25 @@ class Grid:
     lon: np.ndarray
 
     def __post_init__(self):
-        self.lat = np.asarray(self.lat, dtype=float)
-        self.lon = np.asarray(self.lon, dtype=float)
-        for name, c in (("lat", self.lat), ("lon", self.lon)):
-            d = np.diff(c)
-            if c.size < 2 or not np.allclose(d, d[0], rtol=0, atol=1e-4 * abs(d[0])):
-                raise ValueError(f"{name} is not a regular grid")
+        self.lat = self._regular("lat", self.lat)
+        self.lon = self._regular("lon", self.lon)
         self.dlat = abs(self.lat[1] - self.lat[0])
         self.dlon = self.lon[1] - self.lon[0]
         if self.dlon <= 0:
             raise ValueError("longitude must increase")
+
+    @staticmethod
+    def _regular(name, c) -> np.ndarray:
+        """Check a regular spacing and snap to it. EM-Earth stores float32
+        coordinates, whose steps scatter by ~1e-5 degrees around 0.1."""
+        c = np.asarray(c, dtype=float)
+        if c.size < 2:
+            raise ValueError(f"{name} is not a regular grid")
+        step = (c[-1] - c[0]) / (c.size - 1)
+        exact = c[0] + step * np.arange(c.size)
+        if np.abs(c - exact).max() > 1e-3 * abs(step):
+            raise ValueError(f"{name} is not a regular grid")
+        return np.round(exact, 9)
 
     @classmethod
     def from_file(cls, path) -> "Grid":
@@ -304,35 +319,42 @@ def basin_means(field: np.ndarray, W: sp.csr_matrix) -> tuple[np.ndarray, np.nda
     return mean, frac
 
 
-def read_month(path, weights: Weights, grid: Grid | None = None) -> tuple[pd.DatetimeIndex, np.ndarray]:
-    """Dates and the prcp window (nt, rows, cols) of one monthly file."""
+def read_month(path, weights: Weights, variables=("prcp",)) -> tuple[pd.DatetimeIndex, dict[str, np.ndarray]]:
+    """Dates and, per variable, the window (nt, rows, cols) of one monthly file."""
     import xarray as xr
 
     month = FILE_RE.search(Path(path).name).group(1)
     r0, r1, c0, c1 = weights.window
     with xr.open_dataset(path, decode_times=False, mask_and_scale=True) as ds:
-        var, tdim, lat, lon = _names(ds)
+        _, tdim, lat, lon = _names(ds, variables[0])
         g = Grid(ds[lat].to_numpy(), ds[lon].to_numpy())
         if g.signature() != weights.grid_signature:
             raise ValueError(f"{Path(path).name}: grid {g.signature()} differs from weights grid "
                              f"{weights.grid_signature}")
-        da = ds[var].isel({lat: slice(r0, r1), lon: slice(c0, c1)}).transpose(tdim, lat, lon)
-        field = da.to_numpy().astype(float)
+        fields = {v: ds[v].isel({lat: slice(r0, r1), lon: slice(c0, c1)}).transpose(tdim, lat, lon)
+                  .to_numpy().astype(float) for v in variables}
+    nt = next(iter(fields.values())).shape[0]
     start = pd.Timestamp(f"{month[:4]}-{month[4:]}-01")
-    if field.shape[0] != start.days_in_month:
-        raise ValueError(f"{Path(path).name}: {field.shape[0]} time steps, expected {start.days_in_month}")
-    return pd.date_range(start, periods=field.shape[0], freq="D"), field
+    if nt != start.days_in_month:
+        raise ValueError(f"{Path(path).name}: {nt} time steps, expected {start.days_in_month}")
+    return pd.date_range(start, periods=nt, freq="D"), fields
 
 
-def month_frame(dates, field, weights: Weights, weightings=("area",)) -> pd.DataFrame:
-    """Long table (id, date, prcp_mmd[, prcp_mmd_coverage], valid_frac) for one month."""
+def month_frame(dates, fields, weights: Weights, weightings=("area",)) -> pd.DataFrame:
+    """Long table (id, date, one column per variable and weighting, valid_frac) for one month.
+
+    ``fields`` is {variable: array} as from read_month, or a single prcp array.
+    """
+    if not isinstance(fields, dict):
+        fields = {"prcp": fields}
     out = pd.DataFrame({"id": np.repeat(weights.ids, len(dates)),
                         "date": np.tile(np.asarray(dates, dtype="datetime64[ns]"), len(weights.ids))})
     frac = None
-    for w in weightings:
-        mean, f = basin_means(field, weights.matrix(w))
-        out[WEIGHTINGS[w]] = mean.T.ravel()
-        frac = f if frac is None else frac
+    for var, field in fields.items():
+        for w in weightings:
+            mean, f = basin_means(field, weights.matrix(w))
+            out[column(var, w)] = mean.T.ravel()
+            frac = f if frac is None else frac
     out["valid_frac"] = frac.T.ravel().astype("float32")
     return out
 
@@ -366,7 +388,7 @@ def month_files(directory) -> dict[str, Path]:
 
 
 def extract(directory, polygons, cache_dir, weightings=("area",), months=None, include_cloud=False,
-            overwrite=False, log=print) -> dict[str, str]:
+            overwrite=False, log=print, variables=("prcp",)) -> dict[str, str]:
     """Basin means for every monthly file in ``directory`` not yet in ``cache_dir``.
 
     polygons: GeoDataFrame/GeoSeries in EPSG:4326 indexed by id. months: optional
@@ -398,8 +420,8 @@ def extract(directory, polygons, cache_dir, weightings=("area",), months=None, i
                                      f"{grid_file.read_text()}")
                 weights = cached_weights(polygons, grid, cache_dir, log)
                 grid_file.write_text(grid.signature())
-            dates, field = read_month(p, weights)
-            df = month_frame(dates, field, weights, weightings)
+            dates, fields = read_month(p, weights, variables)
+            df = month_frame(dates, fields, weights, weightings)
             tmp = cache_dir / f".prcp_{m}.parquet.tmp"
             df.to_parquet(tmp, index=False)
             os.replace(tmp, cache_dir / f"prcp_{m}.parquet")

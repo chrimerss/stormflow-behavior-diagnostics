@@ -106,7 +106,8 @@ def main() -> None:
     val = sf.validation_set("usgs")
     t0, t1 = window(a.forcing_dir, a.start, a.end, a.allow_gaps)
     print(f"{len(val)} US validation stations; window {t0.date()} .. {t1.date()}")
-    P = forcing.load(a.forcing_dir, val.UCIN, start=t0, end=t1)
+    # the authors' EM-Earth series: prcp_corrected, plain coverage mean (F11)
+    P = forcing.load(a.forcing_dir, val.UCIN, column=forcing.column("prcp_corrected", "coverage"), start=t0, end=t1)
     days = pd.date_range(t0, t1, freq="D")
     missing_ids = sorted(set(val.UCIN) - set(P.columns))
     if missing_ids:
