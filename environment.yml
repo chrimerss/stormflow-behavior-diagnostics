@@ -1,49 +1,20 @@
+# Python env for the diagnostics. R is included only for `segmented` (via rpy2).
+# The authors' R notebook runs in the separate env in environment-r.yml:
+# conda-forge's R and Python xgboost 1.7 builds cannot share one env.
 name: stormflow-diag
 channels:
   - conda-forge
 dependencies:
-  # Python side: diagnostics
   - python=3.11
   - numpy
   - pandas
   - scipy
-  - scikit-learn
-  - xgboost=1.7          # same major/minor as the authors' R xgboost 1.7.9.1, so the saved models load unchanged
-  - shap
-  - geopandas
-  - matplotlib
-  - seaborn
-  - pyreadr              # read upstream/data/Training_IDs.RData
   - statsmodels
-  - rpy2                 # call R segmented (Muggeo) from Python for the Phase 0 regression
+  - scikit-learn
+  - py-xgboost=1.7       # same version as the authors' R xgboost 1.7.9.1; loads their JSON models
+  - pyreadr              # upstream/data/Training_IDs.RData
   - pyarrow
-  - xarray
-  - netcdf4
-  - rasterio
-  - exactextract         # basin-mean rainfall over catchment polygons (Phase 2)
-  - s3fs                 # EM-Earth on AWS
-  - dataretrieval        # USGS NWIS
-  - requests
-  - tqdm
   - pytest
-  - jupyterlab
-  # R side: exact reproduction of upstream/code/Reproducing_XGBoost_Models_Results.Rmd
-  # conda-forge has r-xgboost 1.7 only up to R 4.3 (authors used R 4.4.2; the model files are version-independent)
-  # tidyterra and rnaturalearthhires are not on conda-forge: run scripts/setup_r_extras.R after creating the env
+  - rpy2
   - r-base=4.3
-  - r-rmarkdown
-  - r-data.table
-  - r-here
-  - r-tidyverse
-  - r-xgboost=1.7.6
-  - r-caret
-  - r-knitr
-  - r-countrycode
-  - r-maptiles
-  - r-terra
-  - r-sf
-  - r-scales
-  - r-ggthemes
-  - r-rnaturalearth
-  - r-testthat
-  - r-segmented          # breakpoint regression used by the authors (Muggeo)
+  - r-segmented          # Muggeo's breakpoint regression and score test

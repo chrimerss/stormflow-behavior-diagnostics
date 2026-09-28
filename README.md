@@ -34,11 +34,12 @@ docs/                 GitHub Pages site: status, findings log, plan
 ```bash
 git clone --recurse-submodules https://github.com/chrimerss/stormflow-behavior-diagnostics.git
 cd stormflow-behavior-diagnostics
-mamba env create -f environment.yml
-mamba activate stormflow-diag
-Rscript scripts/setup_r_extras.R
-pip install -e .
+mamba env create -f environment.yml      # Python diagnostics (+ R segmented via rpy2)
+mamba env create -f environment-r.yml    # authors' R code (xgboost 1.7.6, caret)
+mamba run -n stormflow-diag pip install -e .
 ```
+
+To render the authors' full notebook with maps, also run `mamba run -n stormflow-r Rscript scripts/setup_r_extras.R`.
 
 Then place the Figshare package under `data/` as described in [data/README.md](data/README.md).
 

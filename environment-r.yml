@@ -1,0 +1,18 @@
+# R env for running the authors' notebook code (scripts/*.R).
+# libxgboost must be pinned, or conda pairs r-xgboost 1.7.6 with a 3.x core
+# that cannot read the authors' binary model files.
+name: stormflow-r
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.3           # conda-forge has r-xgboost 1.7 only up to R 4.3 (authors used 4.4.2)
+  - r-xgboost=1.7.6
+  - libxgboost=1.7.6
+  - r-caret
+  - r-data.table
+  - r-dplyr
+  - r-tidyr
+  - r-here
+  - r-knitr
+  - r-countrycode
+  - r-segmented
