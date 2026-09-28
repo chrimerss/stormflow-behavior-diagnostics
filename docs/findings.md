@@ -9,6 +9,43 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F9. Phase 0 passes: labels rebuild from raw data, but a quarter of the season splits cannot {#f9}
+*2026-09-27 · Phase 0, Check B · decision: **go***
+
+**Event detection.** We ported DMCA-ESR (Giani et al. 2022) from the reference MATLAB code to Python. Checked against that code running in GNU Octave 10.3, the port is bit-for-bit identical on the bundled example gauge and on five of the authors' gauges. Run on the authors' daily series (`Event_Inputs.zip`) with R_min = 1.2 mm/day and L_max = 16 days, it reproduces their catalogue:
+
+- 2,030,547 of 2,030,569 events match on all four dates (99.9989 %), with 26 extra on our side. 4,528 of 4,552 gauges are identical.
+- On matched events, volumes agree to the last printed digit.
+- The 48 leftover differences are at 24 CAMELS-GB gauges, where rainfall is stored to two decimals. A fluctuation can then sit exactly on the R_min threshold, and MATLAB and Octave round the moving mean differently there.
+
+Conventions we had to infer from their catalogue, each confirmed event by event:
+
+- Series are divided by 24 (mm/h), as in the reference `example.m`.
+- NaN streamflow stays in the series. Events with any missing flow in the stormflow window are dropped.
+- Kept events have 0 < runoff ratio ≤ 1, a rainfall duration of 2–15 days and a stormflow duration of at most 15 days.
+- Each event's season value is the mean of the gauge's monthly phenology values over the calendar months it spans; below zero is dormant.
+
+**Labels from raw data, end to end** (our events → our regression → rule):
+
+| Season split | Agreement with their labels | Simple reproduced (dormant / growing) |
+|---|---:|---:|
+| Their catalogue's season for each event | 8,995 / 9,000 (**99.94 %**) | 210 / 210, 73 / 73 |
+| Released phenology file (`Gauged_Catchments_Growing_Dormancy_Probability.csv`) | 8,402 / 8,988 (93.5 %) | 177 / 210, 60 / 73 |
+
+**Decision.** Event detection and labelling reproduce, so we can label new gauges exactly as the authors would (go threshold: ≥ 95 % and all 210 dormant simple). Phase 2 proceeds.
+
+**The season problem.** For the 3,407 gauges not prefixed `WRR_`, the released phenology file reproduces every event's season, and label agreement is 99.9 %. The other 1,145 gauges (Source ID `WRR_*`: 483 Brazil, 269 US, 208 Australia, 124 GB, 37 Chile, 18 Canada, 6 Mexico) do not follow it. Their catalogue values are multiples of 1/18, which suggests a different phenology product.
+
+- Rebuilding their seasons from the released file puts only 58.9 % of their events in the same season as the catalogue does.
+- Labels then agree for only 72.4 % (dormant) and 76.4 % (growing) of these gauges.
+- These gauges carry 119 of the 210 dormant simple labels and 45 of the 73 growing ones. Under the released seasons, 33 of those 119 and 13 of those 45 change class.
+
+So a quarter of the gauged labels cannot be rebuilt from the released data. They also depend strongly on how the season is defined. A reasonable alternative split changes about one label in four.
+
+Code: `scripts/phase0_check_b_pilot.py`, `scripts/phase0_check_b_labels.py`. Output: `results/phase0/check_b_*.csv`. The DMCA-ESR port (`stage1/events.py`) will be published once licensing of the reference MATLAB code is settled; that repository carries no license.
+
+---
+
 ## F8. Independent halves of a record give the same label only ~70 % of the time {#f8}
 *2026-09-27 · Phase 4 (using the authors' event catalogue)*
 
