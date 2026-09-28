@@ -9,6 +9,28 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
+## F7. Almost all "simple" ungauged predictions are tiny British Columbia–area basins below the training range of area {#f7}
+*2026-09-27 · Phase 2 scoping*
+
+What the 77,585 "ungauged" catchments are (`Polygon Source` in the Figshare table):
+
+| Source | Catchments | Median area (km²) | Predicted simple (dormant) |
+|---|---:|---:|---:|
+| BCUB (British Columbia and adjacent US, 46–60° N, 121–141° W) | 60,349 | 5.0 | 33,823 |
+| GSIM stations | 14,476 | 270 | 544 |
+| CAMELS-DK (ungauged part) | 2,240 | 14.9 | 5 |
+| CAMELS-DE | 374 | 184 | 1 |
+| CAMELS-FR | 146 | 266 | 3 |
+
+- **98.4 % of dormant predicted-simple catchments (33,823 of 34,376) are BCUB polygons.** By count, simple is the largest predicted class (44 %); by area, it covers 1.7 %.
+- **Most BCUB catchments are smaller than nearly every training catchment.** The dormant training set's area runs from 0.79 km² (minimum) through 9.5 km² (1st percentile) to 303 km² (median). 63.5 % of BCUB catchments are below that 1st percentile and 78 % below the 5th (22.8 km²). Only 15 training gauges are under 5 km², three of them simple; about 31,000 BCUB catchments are.
+- The paper's DBSCAN analysis finds that ungauged catchments sit mostly inside the training domain in the joint predictor space. That can hold while area alone is far out of range: the model has almost no labelled evidence about 1–10 km² catchments, which make up most of its ungauged predictions.
+- 17,236 "ungauged" catchments are GSIM or CAMELS stations. Many have daily streamflow available from national agencies, and these are the Phase 2 validation set.
+
+**Implication, combined with [F5](#f5):** the ungauged "simple clusters" rest on a class whose held-out precision is 0.49 (dormant) and on catchments mostly smaller than the training data covers. Phase 2 tests this directly where gauges exist.
+
+---
+
 ## F6. On the 246 boundary-flagged gauges the models barely beat "always complex" {#f6}
 *2026-09-27 · Phase 1*
 
