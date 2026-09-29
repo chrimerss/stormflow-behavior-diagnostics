@@ -45,6 +45,10 @@ Code: `scripts/phase4_us_rainfall_swap.py`. Output: `results/phase4/us_rainfall_
 | | climate only | 1,309 | 0.592 | 0.335 | 0.01 |
 | | always complex | 1,309 | **0.607** | 0.333 | 0 |
 
+**Where each predicted class ends up** ([open full page](sankey.html)): switch season and gauge subset, and hover a band for its count.
+
+<iframe src="sankey.html" title="Predicted vs observed class, US validation gauges" style="width:100%;height:1020px;border:0;border-radius:12px"></iframe>
+
 For reference, the same models score κ 0.54 (dormant) and 0.47 (growing) on the authors' own held-out split ([F6](#f6)). The authors' labels under the two rainfall products agree about 85 % (dormant) and 82 % (growing) ([F13](#f13)).
 
 - **No gain over a neighbouring gauge.** On gauges the model never saw, its predictions score the same as copying the label of the nearest gauged catchment. κ is 0.37 vs 0.38 (dormant) and 0.15 vs 0.16 (growing), and the 95 % bootstrap intervals of the differences are −0.06 to +0.04 and −0.07 to +0.05.

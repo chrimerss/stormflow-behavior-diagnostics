@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicted vs observed class</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --hair: #e1e0d9;
+    --ring: rgba(11,11,11,0.10);
+    --c-simple: #2a78d6;
+    --c-intermediate: #eb6834;
+    --c-complex: #1baf7a;
+    --good: #006300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --hair: #2c2c2a; --ring: rgba(255,255,255,0.10);
+      --c-simple: #3987e5; --c-intermediate: #d95926; --c-complex: #199e70; --good: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --hair: #2c2c2a; --ring: rgba(255,255,255,0.10);
+    --c-simple: #3987e5; --c-intermediate: #d95926; --c-complex: #199e70; --good: #0ca30c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 28px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .sub { color: var(--ink-2); margin: 0 0 16px; max-width: 70ch; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+  .ctl { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 13px; }
+  .seg { display: inline-flex; border: 1px solid var(--ring); border-radius: 8px; overflow: hidden; }
+  .seg button { font: inherit; font-size: 13px; color: var(--ink-2); background: transparent; border: 0;
+                padding: 5px 12px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--ring); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+  select { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface);
+           border: 1px solid var(--ring); border-radius: 8px; padding: 5px 8px; }
+  .card { background: var(--surface); border: 1px solid var(--ring); border-radius: 12px; padding: 16px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0 0 8px; }
+  .kpi .v { font-size: 22px; font-weight: 600; }
+  .kpi .l { color: var(--ink-2); font-size: 12.5px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .band { transition: opacity .12s; cursor: default; outline: none; }
+  .node-label { fill: var(--ink); font-size: 16px; font-weight: 600; }
+  .node-sub { fill: var(--ink-2); font-size: 14px; }
+  .axis-head { fill: var(--muted); font-size: 13px; letter-spacing: .02em; }
+  .note { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+  #tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink);
+         border: 1px solid var(--ring); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+         box-shadow: 0 4px 16px rgba(0,0,0,.12); opacity: 0; transition: opacity .08s; max-width: 260px; }
+  #tip .tv { font-size: 15px; font-weight: 600; }
+  #tip .tk { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  #tip .ts { color: var(--ink-2); }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+  table { border-collapse: collapse; margin-top: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 10px; text-align: right; border-bottom: 1px solid var(--hair); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--ink-2); font-weight: 500; }
+  td.diag { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Predicted vs observed class</h1>
+  <p class="sub">US validation gauges the authors treated as ungauged. Left: the class the authors' XGBoost model predicts. Right: the class from the rainfall–runoff regression test on the gauge's own events (the paper's rule, reproduced). Bands are coloured by the predicted class.</p>
+
+  <div class="controls" role="group" aria-label="Chart filters">
+    <div class="ctl">Season
+      <span class="seg" id="season">
+        <button type="button" data-v="dormant" aria-pressed="true">Dormant</button>
+        <button type="button" data-v="growing" aria-pressed="false">Growing</button>
+      </span>
+    </div>
+    <label class="ctl">Gauges
+      <select id="subset">
+        <option value="all">All validation gauges</option>
+        <option value="noovl">No overlap with any gauged polygon</option>
+        <option value="far">More than 10 km from any gauged polygon</option>
+      </select>
+    </label>
+    <div class="ctl">Band width
+      <span class="seg" id="mode">
+        <button type="button" data-v="share" aria-pressed="true">Share of predicted class</button>
+        <button type="button" data-v="count" aria-pressed="false">Catchment count</button>
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kpis" id="kpis"></div>
+    <svg id="chart" viewBox="0 0 800 440" role="img" aria-labelledby="chart-desc"><desc id="chart-desc"></desc></svg>
+    <p class="note" id="note"></p>
+    <details>
+      <summary>Table view</summary>
+      <table id="table"></table>
+    </details>
+  </div>
+  <p class="note">Source: <a href="findings.html#f12" style="color:inherit">F12</a>, results/phase3/us_predictions.csv. Observed labels use EM-Earth rainfall and USGS flow, 1979–2019.</p>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const CLASSES = ["simple", "intermediate", "complex"];
+const NAME = {simple: "Simple", intermediate: "Intermediate", complex: "Complex"};
+// rows: predicted (authors' model), columns: observed (regression test)
+const DATA = {"dormant|all": [[7, 29, 5], [22, 519, 206], [12, 161, 361]], "dormant|noovl": [[6, 17, 5], [17, 402, 135], [8, 109, 187]], "dormant|far": [[1, 6, 2], [13, 234, 87], [6, 68, 89]], "growing|all": [[0, 4, 7], [15, 264, 302], [14, 217, 486]], "growing|noovl": [[0, 3, 5], [12, 205, 179], [13, 186, 286]], "growing|far": [[0, 1, 3], [8, 117, 92], [11, 137, 142]]};
+const SUBSET_NAME = {all: "all validation gauges", noovl: "gauges with no polygon overlap", far: "gauges > 10 km from any gauged polygon"};
+
+const state = {season: "dormant", subset: "all", mode: "share"};
+const svg = document.getElementById("chart");
+const NS = "http://www.w3.org/2000/svg";
+const tip = document.getElementById("tip");
+const H = 440, TOP = 34, BOT = 10, NODE_W = 14, GAP = 18;
+let W = 800, XL = 230, XR = W - 170 - NODE_W;
+// size the drawing to its container so labels keep a readable size on narrow screens
+function fit() {
+  W = Math.max(520, Math.min(800, svg.parentElement.clientWidth - 32));
+  XL = Math.round(W * 0.29); XR = W - Math.round(W * 0.21) - NODE_W;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+}
+const pct = x => (x * 100).toFixed(0) + "%";
+const color = c => `var(--c-${c})`;
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function text(parent, x, y, str, cls, anchor) {
+  const t = el("text", {x, y, class: cls, "text-anchor": anchor || "start"}, parent);
+  t.textContent = str;
+  return t;
+}
+
+function layout(M) {
+  const rowTot = M.map(r => r.reduce((a, b) => a + b, 0));
+  const colTot = CLASSES.map((_, j) => M.reduce((a, r) => a + r[j], 0));
+  const N = rowTot.reduce((a, b) => a + b, 0);
+  const avail = H - TOP - BOT - GAP * 2;
+  // band thickness for each flow
+  let w;
+  if (state.mode === "count") {
+    const k = avail / N;
+    w = M.map(r => r.map(v => v > 0 ? Math.max(v * k, 1.5) : 0));
+  } else {
+    const k = avail / 3;
+    w = M.map((r, i) => r.map(v => rowTot[i] > 0 && v > 0 ? Math.max(v / rowTot[i] * k, 1.5) : 0));
+  }
+  const leftH = w.map(r => r.reduce((a, b) => a + b, 0));
+  const rightH = CLASSES.map((_, j) => w.reduce((a, r) => a + r[j], 0));
+  const stack = hs => { let y = TOP; return hs.map(h => { const y0 = y; y += h + GAP; return y0; }); };
+  // centre each side vertically
+  const off = hs => (H - TOP - BOT - (hs.reduce((a, b) => a + b, 0) + GAP * 2)) / 2;
+  const ly = stack(leftH).map(y => y + off(leftH)), ry = stack(rightH).map(y => y + off(rightH));
+  return {rowTot, colTot, N, w, leftH, rightH, ly, ry};
+}
+
+function render() {
+  fit();
+  const M = DATA[`${state.season}|${state.subset}`];
+  const L = layout(M);
+  while (svg.lastChild && svg.lastChild.tagName !== "desc") svg.removeChild(svg.lastChild);
+
+  text(svg, XL + NODE_W / 2, 16, "PREDICTED BY THE MODEL", "axis-head", "middle");
+  text(svg, XR + NODE_W / 2, 16, "OBSERVED (REGRESSION TEST)", "axis-head", "middle");
+
+  // bands: source slots ordered by target, target slots ordered by source
+  const outY = L.ly.slice(), inY = L.ry.slice();
+  const bands = el("g", {}, svg);
+  const all = [];
+  CLASSES.forEach((src, i) => {
+    CLASSES.forEach((dst, j) => {
+      const t = L.w[i][j];
+      if (!t) return;
+      const y0 = outY[i], y1 = inY[j];
+      outY[i] += t; inY[j] += t;
+      const x0 = XL + NODE_W, x1 = XR, xm = (x0 + x1) / 2;
+      const d = `M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1} L${x1},${y1 + t} C${xm},${y1 + t} ${xm},${y0 + t} ${x0},${y0 + t} Z`;
+      const p = el("path", {d, class: "band", fill: color(src), "fill-opacity": i === j ? 0.55 : 0.38,
+                            tabindex: 0, "aria-label": `${M[i][j]} predicted ${src}, observed ${dst}`}, bands);
+      const info = {src, dst, n: M[i][j], rowTot: L.rowTot[i], correct: i === j};
+      p.addEventListener("pointermove", e => showTip(e.clientX, e.clientY, info, p));
+      p.addEventListener("pointerleave", hideTip);
+      p.addEventListener("focus", () => { const b = p.getBoundingClientRect(); showTip(b.left + b.width / 2, b.top, info, p); });
+      p.addEventListener("blur", hideTip);
+      all.push(p);
+    });
+  });
+  svg._bands = all;
+
+  // nodes and labels
+  CLASSES.forEach((c, i) => {
+    if (L.leftH[i] > 0) {
+      el("rect", {x: XL, y: L.ly[i], width: NODE_W, height: L.leftH[i], rx: 3, fill: color(c)}, svg);
+      const cy = L.ly[i] + L.leftH[i] / 2;
+      text(svg, XL - 10, cy - 2, `${NAME[c]}`, "node-label", "end");
+      const right = M[i][i], tot = L.rowTot[i];
+      text(svg, XL - 10, cy + 17, tot ? `${tot} predicted · ${pct(right / tot)} correct` : "none predicted", "node-sub", "end");
+    } else {
+      text(svg, XL - 10, L.ly[i] + 4, `${NAME[c]}: none predicted`, "node-sub", "end");
+    }
+    if (L.rightH[i] > 0) {
+      el("rect", {x: XR, y: L.ry[i], width: NODE_W, height: L.rightH[i], rx: 3, fill: color(c)}, svg);
+      const cy = L.ry[i] + L.rightH[i] / 2;
+      text(svg, XR + NODE_W + 10, cy - 2, `${NAME[c]}`, "node-label", "start");
+      text(svg, XR + NODE_W + 10, cy + 17, `${L.colTot[i]} observed`, "node-sub", "start");
+    }
+  });
+
+  // headline figures
+  const acc = CLASSES.reduce((a, _, i) => a + M[i][i], 0) / L.N;
+  const always = L.colTot[2] / L.N;
+  const ps = L.rowTot[0], psOk = M[0][0];
+  const k = document.getElementById("kpis");
+  k.replaceChildren();
+  [[`${psOk} of ${ps}`, "predicted simple that are observed simple"],
+   [pct(acc), `overall agreement (always “complex”: ${pct(always)})`],
+   [`${L.N}`, `catchments, ${state.season} season`]].forEach(([v, l]) => {
+    const d = document.createElement("div"); d.className = "kpi";
+    const a = document.createElement("div"); a.className = "v"; a.textContent = v;
+    const b = document.createElement("div"); b.className = "l"; b.textContent = l;
+    d.append(a, b); k.appendChild(d);
+  });
+  document.getElementById("note").textContent = state.mode === "share"
+    ? "Band width = share of each predicted class, so every predicted class gets equal height; right-hand bars are not to scale (counts are in the labels and the table)."
+    : "Band width = number of catchments (bands under 1.5 px are drawn at 1.5 px).";
+  document.getElementById("chart-desc").textContent =
+    `Sankey diagram for ${SUBSET_NAME[state.subset]}, ${state.season} season: ${ps} predicted simple of which ${psOk} observed simple; overall agreement ${pct(acc)}.`;
+
+  // table
+  const t = document.getElementById("table");
+  t.replaceChildren();
+  const hr = t.insertRow();
+  ["Predicted ↓ / observed →", ...CLASSES.map(c => NAME[c]), "Total", "Correct"].forEach(h => {
+    const th = document.createElement("th"); th.textContent = h; hr.appendChild(th);
+  });
+  CLASSES.forEach((c, i) => {
+    const r = t.insertRow();
+    r.insertCell().textContent = NAME[c];
+    M[i].forEach((v, j) => { const td = r.insertCell(); td.textContent = v; if (i === j) td.className = "diag"; });
+    r.insertCell().textContent = L.rowTot[i];
+    r.insertCell().textContent = L.rowTot[i] ? pct(M[i][i] / L.rowTot[i]) : "–";
+  });
+  const tr = t.insertRow();
+  tr.insertCell().textContent = "Total observed";
+  L.colTot.forEach(v => tr.insertCell().textContent = v);
+  tr.insertCell().textContent = L.N;
+  tr.insertCell().textContent = pct(acc);
+}
+
+function showTip(x, y, info, p) {
+  svg._bands.forEach(b => b.style.opacity = b === p ? 1 : 0.35);
+  p.setAttribute("fill-opacity", 0.8);
+  tip.replaceChildren();
+  const v = document.createElement("div"); v.className = "tv";
+  v.textContent = `${info.n} catchment${info.n === 1 ? "" : "s"} · ${pct(info.n / info.rowTot)} of predicted ${info.src}`;
+  const r = document.createElement("div");
+  const key = document.createElement("span"); key.className = "tk"; key.style.background = color(info.src);
+  r.append(key, document.createTextNode(`Predicted ${info.src} → observed ${info.dst}`));
+  const s = document.createElement("div"); s.className = "ts";
+  s.textContent = info.correct ? "Prediction confirmed by the regression test" : "Misclassified";
+  tip.append(v, r, s);
+  const pad = 14, tw = tip.offsetWidth, th = tip.offsetHeight;
+  tip.style.left = Math.min(x + pad, window.innerWidth - tw - 8) + "px";
+  tip.style.top = Math.max(8, y - th - pad) + "px";
+  tip.style.opacity = 1;
+}
+function hideTip() {
+  tip.style.opacity = 0;
+  (svg._bands || []).forEach(b => { b.style.opacity = 1; });
+  svg.querySelectorAll(".band").forEach(b => {
+    const d = b.getAttribute("aria-label");
+    b.setAttribute("fill-opacity", /predicted (\w+), observed \1$/.test(d) ? 0.55 : 0.38);
+  });
+}
+
+function bindSeg(id, key) {
+  document.getElementById(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    state[key] = b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    render();
+  });
+}
+bindSeg("season", "season");
+bindSeg("mode", "mode");
+document.getElementById("subset").addEventListener("change", e => { state.subset = e.target.value; render(); });
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 120); });
+render();
+</script>
+</body>
+</html>
