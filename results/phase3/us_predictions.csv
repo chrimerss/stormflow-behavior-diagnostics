@@ -1,4 +1,4 @@
-UCIN,observed,authors,always_complex,climate_only,nearest_gauge,relation,overlaps_training,years,area,r2_lin,n_events,season
+UCIN,observed,authors,always_complex,climate_only,nearest_gauge,relation,overlaps_gauged,years,area,r2_lin,n_events,season
 73107,complex,intermediate,complex,complex,intermediate,independent,False,>30,<100,0.459011,457,dormant
 73120,intermediate,intermediate,complex,complex,intermediate,independent,False,20-30,<100,0.538223,246,dormant
 73121,intermediate,intermediate,complex,complex,intermediate,independent,False,>30,<100,0.537771,308,dormant

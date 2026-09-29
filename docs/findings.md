@@ -9,7 +9,7 @@ Newest first. Each entry gives the numbers, how they were produced, and what the
 
 ---
 
-## F13. One in six gauged labels changes with the rainfall product, and one in ten with the record period {#f13}
+## F13. One in six gauged labels changes with the rainfall product, and 5–9 % with the record period {#f13}
 *2026-09-29 · Phase 4 (US, the authors' own gauges)*
 
 We kept the authors' own inputs (dates and streamflow from `Event_Inputs`) for their 681 US `GSIM_US_*` gauges and replaced only the rainfall with our EM-Earth series over the same polygons. We then relabelled with the reproduced pipeline.
@@ -17,11 +17,13 @@ We kept the authors' own inputs (dates and streamflow from `Event_Inputs`) for t
 | Authors' US gauges | Change | Labels kept (dormant) | Labels kept (growing) | Dormant simple kept |
 |---|---|---:|---:|---:|
 | 190 with EM-Earth inputs | record cut from 1950–2019 to 1979–2019 | 95.2 % (κ 0.91) | 91.0 % (κ 0.79) | 6 / 7 |
-| 491 with EMDNA-like inputs ([F11](#f11)) | rainfall EMDNA-like → EM-Earth, same flow and period | 84.8 % (κ 0.72) | 81.9 % (κ 0.59) | 8 / 21 |
+| 491 with EMDNA-like inputs ([F11](#f11)) | the authors' 1979–2018 rainfall (probably EMDNA) → EM-Earth, same flow and period | 84.8 % (κ 0.72) | 81.9 % (κ 0.59) | 8 / 21 |
+
+"Labels kept" counts gauge-seasons that still have ≥ 15 events after the change. 2 and 2 of the 190, and 5 and 7 of the 491, fall below that. With the authors' own rainfall, the reproduced pipeline returns all 1,354 labels of these 681 gauges unchanged ([F9](#f9)), so every difference here comes from the swap or the period.
 
 - **Rainfall product.** Swapping the product changes about one label in six. Simple is the most fragile class: 13 of 21 dormant simple gauges become intermediate.
 - **Record period.** Dropping 1950–1978 changes 5–9 % of labels.
-- **A ceiling for validation.** A model trained on the authors' US labels (mostly EMDNA-like) and scored against EM-Earth labels cannot be expected to agree more than about 85 % (dormant) or 82 % (growing), even if it were perfect. We use these figures as the ceiling in [F12](#f12).
+- **A reference level for validation.** Labels for the same gauges under the two rainfall products agree 85 % (dormant) and 82 % (growing). A model that reproduced the authors' US labels perfectly would score about that against EM-Earth labels. This is not a strict ceiling: a model of the underlying class could score higher against either noisy label set. [F12](#f12) uses it as a reference.
 
 Code: `scripts/phase4_us_rainfall_swap.py`. Output: `results/phase4/us_rainfall_swap.csv`.
 
@@ -43,45 +45,51 @@ Code: `scripts/phase4_us_rainfall_swap.py`. Output: `results/phase4/us_rainfall_
 | | climate only | 1,309 | 0.592 | 0.335 | 0.01 |
 | | always complex | 1,309 | **0.607** | 0.333 | 0 |
 
-For reference, the same models score κ 0.54 (dormant) and 0.47 (growing) on the authors' own held-out split ([F5](#f5)). The label-noise ceiling from [F13](#f13) is about 85 % and 82 %.
+For reference, the same models score κ 0.54 (dormant) and 0.47 (growing) on the authors' own held-out split ([F6](#f6)). The authors' labels under the two rainfall products agree about 85 % (dormant) and 82 % (growing) ([F13](#f13)).
 
-- **No gain over proximity.** On gauges the model never saw, its 27 predictors perform exactly as well as copying the label of the nearest gauged catchment (κ 0.37 vs 0.38 dormant, 0.15 vs 0.16 growing). The climate-only model has almost no skill (κ ≤ 0.04), so what skill there is comes from spatial proximity, not from transferable catchment physics.
-- **Growing season.** Accuracy (0.573) is below the "always complex" baseline (0.607).
+- **No gain over a neighbouring gauge.** On gauges the model never saw, its predictions score the same as copying the label of the nearest gauged catchment. κ is 0.37 vs 0.38 (dormant) and 0.15 vs 0.16 (growing), and the 95 % bootstrap intervals of the differences are −0.06 to +0.04 and −0.07 to +0.05.
+  - The baseline may draw on any of the authors' 4,552 gauged catchments, including some outside the training set. Restricted to training gauges it scores κ 0.34 and 0.17, again indistinguishable from the model.
+  - A model on RW5 and AI alone has almost no skill: κ ≤ 0.06 for XGBoost, logistic regression or random forest.
+  - On these gauges, the 27 predictors add nothing measurable beyond a neighbouring gauge's label. This test does not show where the model's remaining skill comes from.
+- **Growing season.** Accuracy (0.573) is no higher than the "always complex" baseline (0.607). The difference is −0.03 (95 % bootstrap interval −0.07 to 0.00).
 - **Simple class.**
   - Dormant: 7 of the 41 gauges predicted simple are observed simple (precision 0.17), and 7 of the 41 observed simple gauges are found (recall 0.17).
   - The median linear R² of predicted-simple gauges is 0.65; only 17 % reach 0.75.
   - Growing: none of the 11 predicted-simple gauges is observed simple.
-  - Rainfall-product noise alone would keep about 38 % of simple labels ([F13](#f13)), so the 17 % is well below even that.
-- **Independence from training.** Skill is highest where validation polygons are nested in training polygons (dormant κ 0.62) and lowest for catchments more than 10 km from any training polygon (dormant κ 0.26, growing κ 0.06). In the growing season, independent-catchment accuracy is 0.51 against 0.46 for "always complex".
-- **Record length and area.** Skill rises with record length (dormant κ 0.23 for 10–20 years, 0.39 for > 30 years) and is lowest for catchments under 100 km².
+  - For comparison, in the EMDNA-like group of [F13](#f13), 8 of 21 dormant simple labels stay simple after the rainfall swap (38 %, 95 % interval 21–59 %), and 8 of the 14 new simple labels were simple before (57 %). The model's 7 of 41 (17 %, interval 9–31 %) is lower than both, but the difference from 8 of 21 is not significant (Fisher p = 0.12).
+- **Distance from the authors' gauges.** Skill is highest where a validation polygon is nested in one of the authors' gauged polygons (dormant κ 0.62; 57 of the 81 nested polygons lie in a training gauge). It is lowest for catchments more than 10 km from any of their gauged polygons: dormant κ 0.26, growing κ 0.06, against 0.34 and 0.08 for the nearest-gauge baseline. In the growing season, accuracy for those distant catchments is 0.51, against 0.46 for "always complex".
+- **Record length and area.** In the dormant season, skill is lowest for 10–20-year records (κ 0.23, against 0.42 for 20–30 and 0.39 for > 30 years) and for catchments under 100 km² (κ 0.23, against 0.36–0.37 above). The growing season shows no such pattern (κ 0.18, 0.13, 0.14 by record length; 0.14, 0.16, 0.14 by area).
 
 **Caveats.**
-1. Our labels use EM-Earth. About 760 of the authors' 950 US training labels appear to use EMDNA-like rainfall ([F11](#f11)), which by itself caps agreement near 85 %. The nearest-gauge baseline faces the same mismatch, so the comparison between the two is fair.
+1. Our labels use EM-Earth. About 760 of the authors' 950 US gauged catchments (80 %) appear to use EMDNA-like rainfall ([F11](#f11)); under that swap their own labels agree only about 85 % ([F13](#f13)). The nearest-gauge baseline faces the same mismatch, so the comparison between the two is fair.
 2. Our records cover 1979–2019, while 190 of the authors' US gauges used 1950–2019.
 3. The US has the densest training data. We would expect sparser regions to do worse, but that is untested here.
+4. The validation catchments are US rivers with a median area of 577 km² (272 km² for the authors' gauges). 98 % of the paper's dormant simple predictions are BCUB basins of a few km² that this test does not cover ([F7](#f7)), and the 1,746 US catchments with sliver polygons cannot be tested ([F10](#f10)).
+
+An independent audit recomputed every number in this entry from the raw files, including three catchments relabelled end to end from NWIS and EM-Earth. All values reproduced.
 
 Code: `scripts/phase2_us_labels.py`, `scripts/phase3_us_scores.py`. Output: `results/phase2/us_labels.csv`, `results/phase3/us_{scores,predictions,simple}.csv`.
 
 ---
 
 ## F11. Most US training rainfall is not EM-Earth, although the metadata says it is {#f11}
-*2026-09-28 · Phase 2, rainfall provenance (3 months tested: Aug 1999, 2008, 2013)*
+*2026-09-28, updated 2026-09-29 with the full 1979–2019 record · Phase 2, rainfall provenance*
 
 We averaged EM-Earth daily precipitation over the authors' gauged polygons and compared the result with the rainfall in their inputs (`Event_Inputs/<GCIN>.csv`). We did this for all 681 US gauges whose metadata gives `precipitation_source = EM-Earth`.
 
-- **How they built the EM-Earth series.** They used the gauge-undercatch-corrected variable `prcp_corrected`, not `prcp`, averaged with plain cell-coverage weights (the exactextract mean). With that choice our series equals theirs to about 1e-7 mm/day on every day.
+- **How they built the EM-Earth series.** They used the gauge-undercatch-corrected variable `prcp_corrected`, not `prcp`, averaged with plain cell-coverage weights (the exactextract mean). With that choice our series equals theirs on every day of 1979–2019, to within 1.4e-3 mm/day (median of the per-gauge maximum 3e-4 mm/day, float32 rounding of the grid coordinates).
 - **Only 190 of the 681 gauges match.** They are exactly the 190 whose inputs run 1950–2019. None of the 491 gauges whose inputs run 1979–2018 match:
 
-| US gauges, compared with EM-Earth `prcp_corrected` | Correlation (median) | Mean abs. difference | Days equal |
-|---|---:|---:|---:|
-| Metadata EM-Earth, inputs 1950–2019 (190) | 1.000 | 0.000 mm | 100 % |
-| Metadata EM-Earth, inputs 1979–2018 (491) | 0.974 | 0.77 mm | 12 % |
-| Metadata EMDNA (269 `WRR_` gauges) | 0.966 | 0.87 mm | 9 % |
+| US gauges, compared with EM-Earth `prcp_corrected` | Days compared (median) | Correlation (median) | Mean abs. difference | Days equal |
+|---|---:|---:|---:|---:|
+| Metadata EM-Earth, inputs 1950–2019 (190) | 14,975 | 1.000 | 0.00001 mm | 100 % |
+| Metadata EM-Earth, inputs 1979–2018 (491) | 14,610 | 0.973 | 0.69 mm | 17 % |
+| Metadata EMDNA (269 `WRR_` gauges; Aug 1999, 2008, 2013 only) | 93 | 0.966 | 0.87 mm | 9 % |
 
 - **The 491 look like EMDNA.** 1979–2018 is exactly the period of EMDNA, the North American dataset from the same group. The 269 gauges labelled EMDNA use the same window, and the 491 differ from EM-Earth in the same way they do. The same window appears for 31 Canadian gauges labelled EM-Earth. We have not yet compared these series with EMDNA itself, so this is an inference, not a proof.
 - **Consequences.**
-  - If the inference holds, about 760 of the 950 US training labels come from EMDNA rainfall, not the 269 the metadata implies.
-  - The metadata column `precipitation_source` is wrong for about a sixth of all gauged catchments.
+  - If the inference holds, about 760 of the 950 US gauged catchments (80 %) use EMDNA rainfall, not the 269 the metadata implies.
+  - The metadata column `precipitation_source` would then be wrong for 522 of the 4,552 gauged catchments (11 %): 491 in the US and 31 in Canada.
   - Validating US predictions on EM-Earth alone would mix a model test with a rainfall-product swap. We will label the US validation gauges with both products, and count flips between them as a Phase 4 result.
 
 Code: `scripts/phase2_emearth.py us-gauged --months …` then `check`. Output: `results/phase2/emearth_vs_authors.csv`.

@@ -72,7 +72,7 @@ def main() -> None:
             "nearest_gauge": rel[f"nearest_{s}_gauged_class"].reindex(L.index),
         })
         P["relation"] = rel.relation.reindex(L.index)
-        P["overlaps_training"] = P.relation.isin(["nested", "contains", "overlapping"])
+        P["overlaps_gauged"] = P.relation.isin(["nested", "contains", "overlapping"])
         P["years"] = pd.cut(rel.n_years_ge_300_valid_days.reindex(L.index), [0, 20, 30, 100], labels=["10-20", "20-30", ">30"])
         P["area"] = pd.cut(rel.area_km2.reindex(L.index), [0, 100, 1000, 1e7], labels=["<100", "100-1000", ">1000"])
         P["r2_lin"] = L.r2_lin
@@ -82,7 +82,7 @@ def main() -> None:
 
         strata = [("all", P.index == P.index)]
         strata += [(f"relation={r}", P.relation == r) for r in ["independent", "adjacent", "nested", "contains"]]
-        strata += [("overlaps_training=no", ~P.overlaps_training), ("overlaps_training=yes", P.overlaps_training)]
+        strata += [("overlaps_gauged=no", ~P.overlaps_gauged), ("overlaps_gauged=yes", P.overlaps_gauged)]
         strata += [(f"years={y}", P.years == y) for y in P.years.cat.categories]
         strata += [(f"area={a}", P.area == a) for a in P.area.cat.categories]
         for name, m in strata:
