@@ -121,8 +121,10 @@ class Grid:
         c = np.asarray(c, dtype=float)
         if c.size < 2:
             raise ValueError(f"{name} is not a regular grid")
-        step = (c[-1] - c[0]) / (c.size - 1)
-        exact = c[0] + step * np.arange(c.size)
+        # snap to the nominal lattice (step to 1e-6 deg, origin to 1e-4 deg) so a
+        # cropped window and the global grid give identical cell edges
+        step = round((c[-1] - c[0]) / (c.size - 1), 6)
+        exact = round(c[0], 4) + step * np.arange(c.size)
         if np.abs(c - exact).max() > 1e-3 * abs(step):
             raise ValueError(f"{name} is not a regular grid")
         return np.round(exact, 9)
