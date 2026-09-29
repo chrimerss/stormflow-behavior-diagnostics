@@ -72,7 +72,7 @@ For reference, the same models score κ 0.54 (dormant) and 0.47 (growing) on the
 | Median linear R² (predicted simple / intermediate / complex) | 0.65 / 0.58 / 0.42 | 0.46 / 0.51 / 0.45 | 0.52 / 0.57 / 0.45 | 0.36 / 0.52 / 0.49 |
 | Spearman(predicted class, linear R²) | 0.38 | 0.17 | 0.25 | 0.07 |
 
-In the dormant season the predicted class tracks the regression test weakly, ordering catchments roughly by R². In the growing season it barely does, and for catchments more than 10 km from any gauged polygon it does not at all (ρ = 0.07). Across the four columns, 7 of the 49 non-overlapping gauges the model calls simple pass the R² ≥ 0.75 test.
+In the dormant season the predicted class tracks the regression test weakly, ordering catchments roughly by R². In the growing season it barely does, and for catchments more than 10 km from any gauged polygon it does not at all (ρ = 0.07). Of the 36 non-overlapping catchment-seasons the model calls simple (28 dormant, 8 growing), 6 pass the R² ≥ 0.75 test.
 
 **Caveats.**
 1. Our labels use EM-Earth. About 760 of the authors' 950 US gauged catchments (80 %) appear to use EMDNA-like rainfall ([F11](#f11)); under that swap their own labels agree only about 85 % ([F13](#f13)). The nearest-gauge baseline faces the same mismatch, so the comparison between the two is fair.
