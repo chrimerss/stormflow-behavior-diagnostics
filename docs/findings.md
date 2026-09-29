@@ -45,7 +45,7 @@ Code: `scripts/phase4_us_rainfall_swap.py`. Output: `results/phase4/us_rainfall_
 | | climate only | 1,309 | 0.592 | 0.335 | 0.01 |
 | | always complex | 1,309 | **0.607** | 0.333 | 0 |
 
-**Where each predicted class ends up** ([open full page](sankey.html)): switch season and gauge subset, and hover a band for its count.
+**Where each predicted class ends up** ([open full page](sankey.html)): band width is the number of catchments; switch season and gauge subset, and hover a band for its count.
 
 <iframe src="sankey.html" title="Predicted vs observed class, US validation gauges" style="width:100%;height:1020px;border:0;border-radius:12px"></iframe>
 

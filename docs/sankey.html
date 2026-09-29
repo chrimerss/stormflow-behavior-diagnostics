@@ -58,6 +58,8 @@
   .node-sub { fill: var(--ink-2); font-size: 14px; }
   .axis-head { fill: var(--muted); font-size: 13px; letter-spacing: .02em; }
   .note { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
+  .flows { color: var(--ink-2); font-size: 13px; margin: 0 0 6px; font-variant-numeric: tabular-nums; }
+  .flows b { color: var(--ink); font-weight: 600; }
   #tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink);
          border: 1px solid var(--ring); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
          box-shadow: 0 4px 16px rgba(0,0,0,.12); opacity: 0; transition: opacity .08s; max-width: 260px; }
@@ -94,14 +96,15 @@
     </label>
     <div class="ctl">Band width
       <span class="seg" id="mode">
-        <button type="button" data-v="share" aria-pressed="true">Share of predicted class</button>
-        <button type="button" data-v="count" aria-pressed="false">Catchment count</button>
+        <button type="button" data-v="count" aria-pressed="true">Catchment count</button>
+        <button type="button" data-v="share" aria-pressed="false">Share of predicted class</button>
       </span>
     </div>
   </div>
 
   <div class="card">
     <div class="kpis" id="kpis"></div>
+    <p class="flows" id="flows"></p>
     <svg id="chart" viewBox="0 0 800 440" role="img" aria-labelledby="chart-desc"><desc id="chart-desc"></desc></svg>
     <p class="note" id="note"></p>
     <details>
@@ -120,11 +123,11 @@ const NAME = {simple: "Simple", intermediate: "Intermediate", complex: "Complex"
 const DATA = {"dormant|all": [[7, 29, 5], [22, 519, 206], [12, 161, 361]], "dormant|noovl": [[6, 17, 5], [17, 402, 135], [8, 109, 187]], "dormant|far": [[1, 6, 2], [13, 234, 87], [6, 68, 89]], "growing|all": [[0, 4, 7], [15, 264, 302], [14, 217, 486]], "growing|noovl": [[0, 3, 5], [12, 205, 179], [13, 186, 286]], "growing|far": [[0, 1, 3], [8, 117, 92], [11, 137, 142]]};
 const SUBSET_NAME = {all: "all validation gauges", noovl: "gauges with no polygon overlap", far: "gauges > 10 km from any gauged polygon"};
 
-const state = {season: "dormant", subset: "all", mode: "share"};
+const state = {season: "dormant", subset: "all", mode: "count"};
 const svg = document.getElementById("chart");
 const NS = "http://www.w3.org/2000/svg";
 const tip = document.getElementById("tip");
-const H = 440, TOP = 34, BOT = 10, NODE_W = 14, GAP = 18;
+const H = 450, TOP = 44, BOT = 10, NODE_W = 14, GAP = 18;
 let W = 800, XL = 230, XR = W - 170 - NODE_W;
 // size the drawing to its container so labels keep a readable size on narrow screens
 function fit() {
@@ -178,6 +181,7 @@ function render() {
 
   text(svg, XL + NODE_W / 2, 16, "PREDICTED BY THE MODEL", "axis-head", "middle");
   text(svg, XR + NODE_W / 2, 16, "OBSERVED (REGRESSION TEST)", "axis-head", "middle");
+  if (state.mode === "share") text(svg, XR + NODE_W / 2, 30, "bars not to scale", "axis-head", "middle");
 
   // bands: source slots ordered by target, target slots ordered by source
   const outY = L.ly.slice(), inY = L.ry.slice();
@@ -215,7 +219,10 @@ function render() {
       text(svg, XL - 10, L.ly[i] + 4, `${NAME[c]}: none predicted`, "node-sub", "end");
     }
     if (L.rightH[i] > 0) {
-      el("rect", {x: XR, y: L.ry[i], width: NODE_W, height: L.rightH[i], rx: 3, fill: color(c)}, svg);
+      const share = state.mode === "share";
+      el("rect", {x: XR, y: L.ry[i], width: NODE_W, height: L.rightH[i], rx: 3,
+                  fill: share ? "none" : color(c), stroke: color(c), "stroke-width": share ? 1.5 : 0,
+                  "stroke-dasharray": share ? "3 3" : "none"}, svg);
       const cy = L.ry[i] + L.rightH[i] / 2;
       text(svg, XR + NODE_W + 10, cy - 2, `${NAME[c]}`, "node-label", "start");
       text(svg, XR + NODE_W + 10, cy + 17, `${L.colTot[i]} observed`, "node-sub", "start");
@@ -236,8 +243,16 @@ function render() {
     const b = document.createElement("div"); b.className = "l"; b.textContent = l;
     d.append(a, b); k.appendChild(d);
   });
+  const fl = document.getElementById("flows");
+  fl.replaceChildren();
+  const line = (lead, parts) => {
+    const b = document.createElement("b"); b.textContent = lead;
+    fl.append(b, document.createTextNode(" " + parts), document.createElement("br"));
+  };
+  line(`Predicted simple (${L.rowTot[0]}):`, CLASSES.map((c, j) => `${M[0][j]} → ${c}`).join(", "));
+  line(`Observed simple (${L.colTot[0]}):`, CLASSES.map((c, i) => `${M[i][0]} from predicted ${c}`).join(", "));
   document.getElementById("note").textContent = state.mode === "share"
-    ? "Band width = share of each predicted class, so every predicted class gets equal height; right-hand bars are not to scale (counts are in the labels and the table)."
+    ? "Band width = share of each predicted class, so every predicted class gets equal height. Right-hand bars (dashed) are not to scale; use Catchment count to compare sizes."
     : "Band width = number of catchments (bands under 1.5 px are drawn at 1.5 px).";
   document.getElementById("chart-desc").textContent =
     `Sankey diagram for ${SUBSET_NAME[state.subset]}, ${state.season} season: ${ps} predicted simple of which ${psOk} observed simple; overall agreement ${pct(acc)}.`;
