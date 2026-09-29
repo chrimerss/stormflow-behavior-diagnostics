@@ -60,6 +60,20 @@ For reference, the same models score κ 0.54 (dormant) and 0.47 (growing) on the
 - **Distance from the authors' gauges.** Skill is highest where a validation polygon is nested in one of the authors' gauged polygons (dormant κ 0.62; 57 of the 81 nested polygons lie in a training gauge). It is lowest for catchments more than 10 km from any of their gauged polygons: dormant κ 0.26, growing κ 0.06, against 0.34 and 0.08 for the nearest-gauge baseline. In the growing season, accuracy for those distant catchments is 0.51, against 0.46 for "always complex".
 - **Record length and area.** In the dormant season, skill is lowest for 10–20-year records (κ 0.23, against 0.42 for 20–30 and 0.39 for > 30 years) and for catchments under 100 km² (κ 0.23, against 0.36–0.37 above). The growing season shows no such pattern (κ 0.18, 0.13, 0.14 by record length; 0.14, 0.16, 0.14 by area).
 
+**Non-overlapping gauges in detail.** These are validation catchments whose polygon does not overlap any of the authors' 4,552 gauged polygons. The table sets the model's predicted class against the class from the regression test on the gauge's own events.
+
+| | Dormant, no overlap | Growing, no overlap | Dormant, > 10 km | Growing, > 10 km |
+|---|---:|---:|---:|---:|
+| n | 886 | 889 | 506 | 511 |
+| Accuracy (always complex) | 0.672 (0.369) | 0.552 (0.529) | 0.640 (0.352) | 0.507 (0.464) |
+| κ, model / nearest gauge / climate only | 0.34 / 0.36 / 0.00 | 0.13 / 0.15 / −0.01 | 0.26 / 0.34 / −0.08 | 0.06 / 0.08 / −0.01 |
+| Predicted simple → observed simple | 6 / 28 | 0 / 8 | 1 / 9 | 0 / 4 |
+| Observed simple found | 6 / 31 | 0 / 25 | 1 / 20 | 0 / 19 |
+| Median linear R² (predicted simple / intermediate / complex) | 0.65 / 0.58 / 0.42 | 0.46 / 0.51 / 0.45 | 0.52 / 0.57 / 0.45 | 0.36 / 0.52 / 0.49 |
+| Spearman(predicted class, linear R²) | 0.38 | 0.17 | 0.25 | 0.07 |
+
+In the dormant season the predicted class tracks the regression test weakly, ordering catchments roughly by R². In the growing season it barely does, and for catchments more than 10 km from any gauged polygon it does not at all (ρ = 0.07). Across the four columns, 7 of the 49 non-overlapping gauges the model calls simple pass the R² ≥ 0.75 test.
+
 **Caveats.**
 1. Our labels use EM-Earth. About 760 of the authors' 950 US gauged catchments (80 %) appear to use EMDNA-like rainfall ([F11](#f11)); under that swap their own labels agree only about 85 % ([F13](#f13)). The nearest-gauge baseline faces the same mismatch, so the comparison between the two is fair.
 2. Our records cover 1979–2019, while 190 of the authors' US gauges used 1950–2019.
